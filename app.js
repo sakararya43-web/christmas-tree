@@ -1,9 +1,14 @@
 /**
  * Christmas Tree ASCII Animation & Web Engine
- * Renders the authentic visual artwork from reference.jpeg with:
- * - Bottom-to-top progressive reveal animation
- * - Dynamic sparkling ascent crest
- * - White pixelated snowfall physics
+ * 100% Authentic Visual Fidelity to reference.jpeg:
+ * - Crown star at apex with radiant celestial beams (\, |, /, -)
+ * - Conical evergreen foliage with tiered pine branches
+ * - Golden spiraling garlands (#ee*0, *ee#%*)
+ * - Ruby red bauble ornaments (@, %) and golden bells
+ * - Wrapped gifts at base (Red box left, Royal Blue box right) and snow mound
+ * - Wide perspective ground grid (...., ::::, ----, ++++, ====)
+ * - White pixelated snowfall physics & CRT bloom overlay
+ * - Organic bottom-to-top assembly animation running for >15 seconds (16.0s build + celebration)
  * - Synchronized to Sia - Snowman starting directly at "Don't cry snowman"
  */
 
@@ -11,7 +16,7 @@
   'use strict';
 
   // Constants
-  const TOTAL_BUILD_DURATION = 15.5; // Seconds for bottom-to-top assembly
+  const TOTAL_BUILD_DURATION = 16.0; // Seconds for bottom-to-top assembly (>15 seconds)
 
   // DOM Elements
   const treeCanvas = document.getElementById('tree-canvas');
@@ -57,20 +62,20 @@
   // Snowflake Particle Physics System
   const SNOW_CHARS = ['.', '·', '*', '+', 'o', '❄'];
   class SnowSystem {
-    constructor(count = 120) {
+    constructor(count = 130) {
       this.count = count;
       this.flakes = [];
       for (let i = 0; i < count; i++) {
         this.flakes.push({
           x: Math.random(),
           y: Math.random(),
-          speed: 0.04 + Math.random() * 0.08,
-          swayAmp: 0.01 + Math.random() * 0.025,
+          speed: 0.045 + Math.random() * 0.08,
+          swayAmp: 0.012 + Math.random() * 0.025,
           swayFreq: 0.8 + Math.random() * 1.5,
           swayPhase: Math.random() * Math.PI * 2,
           char: SNOW_CHARS[Math.floor(Math.random() * SNOW_CHARS.length)],
-          size: Math.floor(10 + Math.random() * 12),
-          alpha: 0.4 + Math.random() * 0.55
+          size: Math.floor(10 + Math.random() * 14),
+          alpha: 0.45 + Math.random() * 0.55
         });
       }
     }
@@ -92,15 +97,15 @@
   // Interactive Click Sparkles
   const userSparkles = [];
   function addSparkles(px, py) {
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < 24; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 40 + Math.random() * 120;
+      const speed = 40 + Math.random() * 130;
       userSparkles.push({
         x: px,
         y: py,
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 20,
-        char: ['*', '✦', '·', '+', 'o', '❄', '0'][Math.floor(Math.random() * 7)],
+        vy: Math.sin(angle) * speed - 25,
+        char: ['*', '✦', '·', '+', 'o', '❄', '0', 'e'][Math.floor(Math.random() * 8)],
         color: ['#fef08a', '#facc15', '#ffffff', '#86efac', '#fca5a5'][Math.floor(Math.random() * 5)],
         life: 1.0,
         decay: 0.02 + Math.random() * 0.03
@@ -108,7 +113,7 @@
     }
   }
 
-  const snowSystem = new SnowSystem(120);
+  const snowSystem = new SnowSystem(130);
   let isPlaying = true;
   let isMuted = false;
   let animTime = 0.0;
@@ -118,6 +123,7 @@
   // Canvas Sizing
   const NATIVE_W = 1072;
   const NATIVE_H = 1180;
+  const CX = NATIVE_W / 2;
 
   function resizeCanvases() {
     const dpr = window.devicePixelRatio || 1;
@@ -155,7 +161,7 @@
       snowSystem.update(dt, animTime);
     }
 
-    // Update Sparkles
+    // Update User Click Sparkles
     for (let i = userSparkles.length - 1; i >= 0; i--) {
       const sp = userSparkles[i];
       sp.x += sp.vx * dt;
@@ -170,12 +176,13 @@
     if (progress < 1.0) {
       progressBarWrap.classList.remove('done');
       if (animTime < 2.0) progressLabel.textContent = "Don't cry, snowman...";
-      else if (animTime < 4.0) progressLabel.textContent = "Not in front of me...";
-      else if (animTime < 7.5) progressLabel.textContent = "Tree Ascending... 🌲";
-      else if (animTime < 12.0) progressLabel.textContent = "Branches Blooming... ✨";
-      else progressLabel.textContent = "⭐ Pinnacle Star Igniting! ⭐";
+      else if (animTime < 4.5) progressLabel.textContent = "Not in front of me...";
+      else if (animTime < 6.5) progressLabel.textContent = "Gifts & Ground Assembling... 🎁";
+      else if (animTime < 10.0) progressLabel.textContent = "Tree Ascending... 🌲";
+      else if (animTime < 13.8) progressLabel.textContent = "Garlands Blooming... ✨";
+      else progressLabel.textContent = "⭐ Pinnacle Crown Star Igniting! ⭐";
     } else {
-      progressLabel.textContent = 'Merry Christmas! 🎄';
+      progressLabel.textContent = 'Merry Christmas & Happy Holidays! 🎄';
       if (animTime > 18.0) progressBarWrap.classList.add('done');
     }
 
@@ -206,72 +213,105 @@
   function drawTreeFrame(t) {
     treeCtx.clearRect(0, 0, NATIVE_W, NATIVE_H);
 
-    // 1. Draw Starry Night Base
+    // 1. Draw Starry Night Sky Base
     if (skyLoaded) {
       treeCtx.drawImage(skyImg, 0, 0, NATIVE_W, NATIVE_H);
     } else {
-      treeCtx.fillStyle = '#0a0e1a';
+      treeCtx.fillStyle = '#070b19';
       treeCtx.fillRect(0, 0, NATIVE_W, NATIVE_H);
     }
 
     if (!refLoaded) return;
 
-    // 2. Progressive Bottom-to-Top Reveal Calculation
-    const groundYBottom = 1180;
-    const groundYTop = 820;
-    const treeYBottom = 1060;
-    const treeYTop = 180;
+    // Organic timeline:
+    // 0.0s - 2.0s: Cosmic sky with snowfall
+    // 2.0s - 4.5s: Ground perspective lines reveal from horizon down
+    // 4.5s - 6.5s: Wrapped gifts & snow bank assemble at base
+    // 6.5s - 13.8s: Tree ascends organically with natural branch-profile crest
+    // 13.8s - 15.5s: Crown star ignites at apex, radiating beams into space
+    // 15.5s+: Full 100% faithful artwork active
 
-    const groundProg = Math.min(1.0, t / 2.0);
-    const currGroundY = Math.round(groundYBottom - groundProg * (groundYBottom - groundYTop));
+    let treeProg = 0.0;
+    let currTreeY = 1040;
 
-    const treeProg = Math.min(1.0, Math.max(0.0, (t - 3.5) / 9.0));
-    const currTreeY = Math.round(treeYBottom - treeProg * (treeYBottom - treeYTop));
+    if (t < 15.5) {
+      treeCtx.save();
+      treeCtx.beginPath();
 
-    const starProg = Math.min(1.0, Math.max(0.0, (t - 12.5) / 2.0));
+      // A. Ground Perspective Grid (2.0s to 4.5s)
+      if (t >= 2.0) {
+        const gProg = Math.min(1.0, (t - 2.0) / 2.5);
+        const currGY = 810 + gProg * (NATIVE_H - 810);
+        treeCtx.rect(0, 810, NATIVE_W, currGY - 810);
+      }
 
-    // Save context for clipping mask
-    treeCtx.save();
-    treeCtx.beginPath();
+      // B. Wrapped Gifts & Snow Bank (4.5s to 6.5s)
+      if (t >= 4.5) {
+        // Red gift box (left)
+        treeCtx.rect(190, 960, 210, 180);
+        // Blue gift box (right)
+        treeCtx.rect(690, 960, 220, 180);
+        // Snow drift (center base)
+        treeCtx.rect(400, 1020, 290, 120);
+      }
 
-    // Reveal ground from bottom up
-    if (groundProg > 0) {
-      treeCtx.rect(0, currGroundY, NATIVE_W, NATIVE_H - currGroundY);
+      // C. Tree Foliage & Garlands (6.5s to 13.8s)
+      if (t >= 6.5) {
+        treeProg = Math.min(1.0, (t - 6.5) / 7.3);
+        currTreeY = 1040 - treeProg * (1040 - 200);
+
+        const halfWAtBase = 385;
+        const halfWAtTop = 40 + (currTreeY - 200) / 840 * 345;
+
+        // Trace organic branch contour
+        treeCtx.moveTo(CX - halfWAtBase, 1040);
+        treeCtx.lineTo(CX + halfWAtBase, 1040);
+        treeCtx.lineTo(CX + halfWAtTop, currTreeY);
+
+        // Branch-wave crest at current growth height
+        const steps = 30;
+        for (let i = 0; i <= steps; i++) {
+          const frac = i / steps;
+          const x = (CX + halfWAtTop) - frac * (halfWAtTop * 2);
+          const wobble = 12 * Math.sin(x * 0.05) * Math.cos(currTreeY * 0.03);
+          treeCtx.lineTo(x, currTreeY + wobble);
+        }
+        treeCtx.lineTo(CX - halfWAtBase, 1040);
+        treeCtx.closePath();
+      }
+
+      // D. Apex Crown Star & Radiant Beams (13.8s to 15.5s)
+      if (t >= 13.8) {
+        const starProg = Math.min(1.0, (t - 13.8) / 1.7);
+        // Crown star body
+        treeCtx.rect(CX - 85, 120, 170, 85);
+        // Radiating celestial beams
+        if (starProg > 0.35) {
+          const bProg = (starProg - 0.35) / 0.65;
+          const beamTop = Math.round(200 - bProg * 170);
+          const beamHalfW = Math.round(bProg * 135);
+          treeCtx.rect(CX - beamHalfW, beamTop, beamHalfW * 2, 200 - beamTop);
+        }
+      }
+
+      treeCtx.clip();
+      treeCtx.drawImage(refImg, 0, 0, NATIVE_W, NATIVE_H);
+      treeCtx.restore();
+    } else {
+      // Full 100% authentic reference artwork rendered directly
+      treeCtx.drawImage(refImg, 0, 0, NATIVE_W, NATIVE_H);
     }
 
-    // Reveal tree from bottom up
-    if (treeProg > 0) {
-      treeCtx.rect(170, currTreeY, 730, treeYBottom - currTreeY);
-    }
-
-    // Reveal crown star and celestial beams
-    if (starProg > 0) {
-      const starY = Math.round(treeYTop - starProg * treeYTop);
-      treeCtx.rect(340, starY, 400, treeYTop + 40 - starY);
-    }
-
-    if (t >= 14.5) {
-      // Entire reference image fully active
-      treeCtx.rect(0, 0, NATIVE_W, NATIVE_H);
-    }
-
-    treeCtx.clip();
-
-    // Draw the authentic reference image
-    treeCtx.drawImage(refImg, 0, 0, NATIVE_W, NATIVE_H);
-    treeCtx.restore();
-
-    // 3. Dynamic Sparkle Embers Riding the Leading Edge
+    // 3. Dynamic Sparkle Embers Riding the Leading Growth Edge
     if (treeProg > 0.0 && treeProg < 1.0) {
-      const halfW = 20 + Math.round(330 * Math.pow(treeProg, 0.85));
-      const cx = NATIVE_W / 2;
+      const halfW = Math.round(40 + treeProg * 345);
       treeCtx.font = "bold 18px 'Fira Code', 'Courier New', monospace";
       treeCtx.shadowBlur = 10;
-      for (let i = 0; i < 12; i++) {
-        const sx = cx - halfW + Math.random() * (halfW * 2);
-        const sy = currTreeY + (Math.random() - 0.5) * 16;
-        const ch = ['*', '+', '#', 'o', '0', 'e'][Math.floor(Math.random() * 6)];
-        const col = ['#fef08a', '#22c55e', '#ffffff', '#facc15'][Math.floor(Math.random() * 4)];
+      for (let i = 0; i < 14; i++) {
+        const sx = CX - halfW + Math.random() * (halfW * 2);
+        const sy = currTreeY + (Math.random() - 0.5) * 22;
+        const ch = ['*', '+', '#', 'o', '0', 'e', '✦'][Math.floor(Math.random() * 7)];
+        const col = ['#fef08a', '#22c55e', '#ffffff', '#facc15', '#86efac'][Math.floor(Math.random() * 5)];
         treeCtx.fillStyle = col;
         treeCtx.shadowColor = col;
         treeCtx.fillText(ch, sx, sy);
@@ -279,15 +319,15 @@
       treeCtx.shadowBlur = 0;
     }
 
-    // 4. Star Pulse & Radiant Glow after Apex Reached
-    if (starProg > 0.0) {
-      const pulse = 1.0 + 0.15 * Math.sin(t * 4.5);
+    // 4. Star Pulse & Warm Golden Bloom Halo
+    if (t >= 13.8) {
+      const pulse = 1.0 + 0.15 * Math.sin(t * 3.8);
       treeCtx.save();
       treeCtx.beginPath();
-      treeCtx.arc(536, 110, 45 * pulse, 0, Math.PI * 2);
+      treeCtx.arc(CX, 145, 52 * pulse, 0, Math.PI * 2);
       treeCtx.fillStyle = 'rgba(254, 240, 138, 0.12)';
       treeCtx.shadowColor = '#facc15';
-      treeCtx.shadowBlur = 25 * pulse;
+      treeCtx.shadowBlur = 28 * pulse;
       treeCtx.fill();
       treeCtx.restore();
     }

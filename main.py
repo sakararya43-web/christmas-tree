@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 """
 Festive Christmas Tree Animation in Terminal
-Directly sampled from reference.jpeg for 100% visual fidelity!
-Synchronized to Sia - Snowman starting from:
-"Don't cry, snowman, not in front of me..."
-Features:
-- Progressive bottom-to-top growth animation
-- Perspective ground lines, wrapped gifts, pine foliage, bells & ornaments
-- Crown star with radiant beams igniting at the apex
-- White pixelated snowfall physics
-- Background audio via pygame.mixer
-- ANSI Truecolor terminal output for vibrant retro neon glow
+Authentic to reference.jpeg with 100% visual fidelity:
+- Ground perspective grid, gifts, pine branches, spiraling garlands, ornaments
+- Apex star with radiating beams igniting at the apex
+- Synchronized to Sia - Snowman starting from "Don't cry snowman"
+- Bottom-to-top organic assembly running for >15 seconds (16.0s build + celebration)
+- White pixelated snowfall physics & ANSI Truecolor glowing output
 """
 
 import sys
@@ -58,19 +54,21 @@ def render_to_terminal(frame, terminal_width, terminal_height, elapsed):
     output_lines = []
     output_lines.append("\033[?25l\033[H")
 
-    # Header banner with synced lyrics starting from "Don't cry snowman"
+    # Header banner with synchronized lyrics
     if elapsed < 2.0:
         lyric = "🎶 'Don't cry, snowman, not in front of me...'"
-    elif elapsed < 4.0:
+    elif elapsed < 4.5:
         lyric = "🎶 'Who'll catch your tears if you can't catch me, darling...'"
-    elif elapsed < 8.0:
-        lyric = "🌲 'If you can't catch me, darling...' [Tree Ascending]"
-    elif elapsed < 12.0:
-        lyric = "✨ 'Don't cry, snowman, don't leave me this way...'"
-    elif elapsed < 14.5:
-        lyric = "⭐ 'A puddle of water can't hold me close, baby!' ⭐"
+    elif elapsed < 6.5:
+        lyric = "🎁 'If you can't catch me, darling...' [Gifts & Snow Assembling]"
+    elif elapsed < 10.0:
+        lyric = "🌲 'Don't cry, snowman, don't leave me this way...' [Tree Ascending]"
+    elif elapsed < 13.8:
+        lyric = "✨ 'A puddle of water can't hold me close, baby!' [Garlands Blooming]"
+    elif elapsed < 15.5:
+        lyric = "⭐ 'Can't hold me close, baby...' [Apex Crown Star Igniting!]"
     else:
-        lyric = "❄  MERRY CHRISTMAS  ❄  [ Sia - Snowman ]"
+        lyric = "❄  MERRY CHRISTMAS & HAPPY HOLIDAYS!  ❄  [ Sia - Snowman ]"
 
     title_pad = max(0, (terminal_width - len(lyric)) // 2)
     output_lines.append(" " * title_pad + "\033[38;2;254;240;138;1m" + lyric + "\033[0m\n")
@@ -96,7 +94,12 @@ def render_to_terminal(frame, terminal_width, terminal_height, elapsed):
         line_parts.append("\033[0m")
         output_lines.append("".join(line_parts))
 
-    footer = "Press Ctrl+C to exit | Bottom-to-Top Growth | Sia - Snowman"
+    progress = min(100.0, (elapsed / 16.0) * 100.0)
+    bar_width = 30
+    filled = int((progress / 100.0) * bar_width)
+    bar_str = "[" + "=" * filled + ("-" if filled < bar_width else "") + " " * (bar_width - filled - 1) + "]" if filled < bar_width else "[" + "=" * bar_width + "]"
+    
+    footer = f"{bar_str} {progress:.0f}% | Bottom-to-Top Reveal (>15s) | Sia - Snowman | Ctrl+C to exit"
     footer_pad = max(0, (terminal_width - len(footer)) // 2)
     output_lines.append("\n" + " " * footer_pad + "\033[38;2;148;163;184m" + footer + "\033[0m")
 
@@ -110,7 +113,7 @@ def main():
     print("\033[?25l")
     print("Loading Christmas Tree Animation (Sia - Snowman)...")
     static_scene = build_static_scene()
-    snow = SnowfallSystem(WIDTH, HEIGHT, count=90)
+    snow = SnowfallSystem(WIDTH, HEIGHT, count=85)
 
     audio_file = os.path.join(os.path.dirname(__file__), "snowman.mp3")
     play_audio(audio_file)
@@ -148,14 +151,12 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
-        print("\033[?25h\033[0m\n")
+        print("\033[?25h\033[0m")
         try:
             import pygame
-
-            pygame.mixer.music.stop()
+            pygame.mixer.quit()
         except Exception:
             pass
-        print("Merry Christmas and Happy Holidays!")
 
 
 if __name__ == "__main__":
