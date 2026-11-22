@@ -1,62 +1,17 @@
 /**
  * Christmas Tree ASCII Animation & Web Engine
- * Perfectly synchronized with Sia - Snowman (Chorus Main Part):
- * "I want you to know that I'm never leaving..."
- * Replicates the exact visual aesthetics of the reference photo.
+ * Renders the authentic visual artwork from reference.jpeg with:
+ * - Bottom-to-top progressive reveal animation
+ * - Dynamic sparkling ascent crest
+ * - White pixelated snowfall physics
+ * - Synchronized to Sia - Snowman starting directly at "Don't cry snowman"
  */
 
 (function () {
   'use strict';
 
-  // Constants & Grid Dimensions
-  const COLS = 84;
-  const ROWS = 62;
-  const TOTAL_BUILD_DURATION = 16.0;
-
-  // Character sets matching reference photo
-  const PINE_CHARS_DENSE = ['%', '#', '@', '8', '&', 'X', '0'];
-  const PINE_CHARS_MID = ['*', '%', '+', '#', 'x', 's', 'o', '0', '='];
-  const PINE_CHARS_LIGHT = ['*', '+', '-', '=', '.', '^', 'o'];
-  const GARLAND_CHARS = ['e', 'e', '@', '#', '*', '+', 'o', '='];
-  const STAR_CHARS = ['e', '@', '#', '*'];
-  const SNOW_CHARS = ['.', '·', '*', '+', 'o', '❄'];
-
-  // Color constants matching reference
-  const COLOR_GROUND_DIM = '#1e293b';
-  const COLOR_GROUND_MID = '#334155';
-  const COLOR_GROUND_BRIGHT = '#475569';
-  const COLOR_GROUND_LINE = '#64748b';
-  const COLOR_GROUND_FROST = '#cbd5e1';
-
-  const COLOR_SNOW_BANK = '#e2e8f0';
-  const COLOR_SNOW_DIM = '#94a3b8';
-
-  const COLOR_PINE_DEEP = '#0e3818';
-  const COLOR_PINE_DARK = '#14532d';
-  const COLOR_PINE_MID = '#166534';
-  const COLOR_PINE_BRIGHT = '#22c55e';
-  const COLOR_PINE_TIP = '#4ade80';
-  const COLOR_PINE_LIME = '#86efac';
-
-  const COLOR_GARLAND_GOLD = '#facc15';
-  const COLOR_GARLAND_BRIGHT = '#fef08a';
-  const COLOR_GARLAND_WARM = '#eab308';
-
-  const COLOR_ORNAMENT_RED = '#ef4444';
-  const COLOR_ORNAMENT_DARK_RED = '#b91c1c';
-  const COLOR_ORNAMENT_SHINE = '#fca5a5';
-
-  const COLOR_BELL_GOLD = '#fde047';
-  const COLOR_STAR_CORE = '#ffffff';
-  const COLOR_STAR_GOLD = '#fef08a';
-  const COLOR_STAR_BEAM = '#fde047';
-
-  const COLOR_GIFT_RED = '#dc2626';
-  const COLOR_GIFT_DARK_RED = '#991b1b';
-  const COLOR_GIFT_BLUE = '#1d4ed8';
-  const COLOR_GIFT_DARK_BLUE = '#1e3a8a';
-  const COLOR_GIFT_RIBBON_GOLD = '#fde047';
-  const COLOR_GIFT_RIBBON_CYAN = '#38bdf8';
+  // Constants
+  const TOTAL_BUILD_DURATION = 15.5; // Seconds for bottom-to-top assembly
 
   // DOM Elements
   const treeCanvas = document.getElementById('tree-canvas');
@@ -88,384 +43,64 @@
   const unmuteToast = document.getElementById('unmute-toast');
   const toastUnmuteBtn = document.getElementById('toast-unmute-btn');
 
-  function createRng(seed = 42) {
-    let s = seed % 2147483647;
-    if (s <= 0) s += 2147483646;
-    return function () {
-      s = (s * 16807) % 2147483647;
-      return (s - 1) / 2147483646;
-    };
-  }
+  // Load the authentic reference image and sky background
+  const refImg = new Image();
+  refImg.src = 'reference.jpeg';
+  let refLoaded = false;
+  refImg.onload = () => { refLoaded = true; };
 
-  // Build the complete static scene model matching reference photo
-  function buildSceneModel() {
-    const rng = createRng(42);
-    const grid = [];
-    for (let y = 0; y < ROWS; y++) {
-      const row = [];
-      for (let x = 0; x < COLS; x++) {
-        row.push({ char: ' ', color: '#060913', glow: 0.0, layer: 'sky', y: y });
-      }
-      grid.push(row);
-    }
+  const skyImg = new Image();
+  skyImg.src = 'sky_bg.jpg';
+  let skyLoaded = false;
+  skyImg.onload = () => { skyLoaded = true; };
 
-    const centerX = Math.floor(COLS / 2); // 42
-
-    // 1. Sky Stars
-    for (let y = 0; y < ROWS; y++) {
-      for (let x = 0; x < COLS; x++) {
-        if (rng() < 0.036) {
-          const starChars = ['.', '·', '+', '*'];
-          const starCols = ['#64748b', '#94a3b8', '#cbd5e1', '#e2e8f0', '#93c5fd'];
-          grid[y][x] = {
-            char: starChars[Math.floor(rng() * starChars.length)],
-            color: starCols[Math.floor(rng() * starCols.length)],
-            glow: rng() * 0.4,
-            layer: 'sky',
-            y: y
-          };
-        }
-      }
-    }
-
-    // 2. Perspective Ground Plane (Rows 47 to 61)
-    const groundTop = 47;
-    for (let y = groundTop; y < ROWS; y++) {
-      let mainChar, subChar, step, col, glowVal;
-      if (y >= ROWS - 3) {
-        mainChar = '='; subChar = '+'; step = 2; col = COLOR_GROUND_LINE; glowVal = 0.35;
-      } else if (y >= ROWS - 6) {
-        mainChar = y % 2 === 0 ? '=' : '-'; subChar = y % 2 === 0 ? '+' : ':'; step = 3; col = COLOR_GROUND_BRIGHT; glowVal = 0.25;
-      } else if (y >= ROWS - 10) {
-        mainChar = y % 2 === 0 ? '-' : ':'; subChar = y % 2 === 0 ? ':' : '.'; step = 4; col = COLOR_GROUND_MID; glowVal = 0.15;
-      } else {
-        mainChar = y % 2 === 0 ? ':' : '.'; subChar = '.'; step = 5; col = COLOR_GROUND_DIM; glowVal = 0.08;
-      }
-
-      for (let x = 0; x < COLS; x++) {
-        let ch = (x % step === 0) ? subChar : mainChar;
-        let c = (rng() < 0.04) ? COLOR_GROUND_FROST : col;
-        grid[y][x] = { char: ch, color: c, glow: glowVal, layer: 'ground', y: y };
-      }
-    }
-
-    // 3. Snow Bank Under Tree (Rows 54 to 57)
-    for (let y = 54; y <= 57; y++) {
-      const v = (y - 54) / 4.0;
-      const w = Math.round(22 + v * 8);
-      for (let dx = -w; dx <= w; dx++) {
-        const x = centerX + dx;
-        if (x >= 0 && x < COLS && rng() < 0.82) {
-          const ch = ['x', 'X', '*', '+', '=', '-', '%'][Math.floor(rng() * 7)];
-          const c = [COLOR_SNOW_BANK, COLOR_SNOW_DIM, '#f1f5f9', '#cbd5e1'][Math.floor(rng() * 4)];
-          grid[y][x] = { char: ch, color: c, glow: 0.45, layer: 'ground', y: y };
-        }
-      }
-    }
-
-    // 4. Wrapped Gifts at Base
-    // Left Red Gift Box (x: 18-29, y: 51-58)
-    const leftRibbonX = 24;
-    const leftRibbonY = 54;
-    for (let y = 51; y <= 58; y++) {
-      for (let x = 18; x <= 29; x++) {
-        if (x === leftRibbonX || y === leftRibbonY) {
-          const ch = (x === leftRibbonX && y === leftRibbonY) ? '+' : (x === leftRibbonX ? '|' : '=');
-          grid[y][x] = { char: ch, color: COLOR_GIFT_RIBBON_GOLD, glow: 0.8, layer: 'gift', y: y };
-        } else {
-          const ch = ['%', '#', 'X', '@'][Math.floor(rng() * 4)];
-          const c = (x < leftRibbonX) ? COLOR_GIFT_RED : COLOR_GIFT_DARK_RED;
-          grid[y][x] = { char: ch, color: c, glow: 0.35, layer: 'gift', y: y };
-        }
-      }
-    }
-    // Left Gift Bow
-    grid[50][leftRibbonX - 1] = { char: '(', color: COLOR_GIFT_RIBBON_GOLD, glow: 0.85, layer: 'gift', y: 50 };
-    grid[50][leftRibbonX]     = { char: 'o', color: COLOR_STAR_CORE, glow: 0.95, layer: 'gift', y: 50 };
-    grid[50][leftRibbonX + 1] = { char: ')', color: COLOR_GIFT_RIBBON_GOLD, glow: 0.85, layer: 'gift', y: 50 };
-
-    // Center Burgundy Box (x: 30-36, y: 53-58)
-    for (let y = 53; y <= 58; y++) {
-      for (let x = 30; x <= 36; x++) {
-        if (x === 33 || y === 56) {
-          grid[y][x] = { char: '#', color: '#fca5a5', glow: 0.55, layer: 'gift', y: y };
-        } else {
-          grid[y][x] = { char: '%', color: '#881337', glow: 0.25, layer: 'gift', y: y };
-        }
-      }
-    }
-
-    // Center Golden Accent Gift under trunk (x: 39-45, y: 53-56)
-    for (let y = 53; y <= 56; y++) {
-      for (let x = 39; x <= 45; x++) {
-        if (x === 41 || x === 42 || y === 55) {
-          grid[y][x] = { char: 'e', color: COLOR_GARLAND_BRIGHT, glow: 0.85, layer: 'gift', y: y };
-        } else {
-          grid[y][x] = { char: ['#', 'X', '*'][Math.floor(rng() * 3)], color: COLOR_GARLAND_WARM, glow: 0.6, layer: 'gift', y: y };
-        }
-      }
-    }
-
-    // Right Royal Blue Box (x: 57-69, y: 51-58)
-    const rightRibbonX = 63;
-    const rightRibbonY = 54;
-    for (let y = 51; y <= 58; y++) {
-      for (let x = 57; x <= 69; x++) {
-        if (x === rightRibbonX || y === rightRibbonY) {
-          const ch = (x === rightRibbonX && y === rightRibbonY) ? '+' : (x === rightRibbonX ? '|' : '=');
-          grid[y][x] = { char: ch, color: COLOR_GIFT_RIBBON_CYAN, glow: 0.8, layer: 'gift', y: y };
-        } else {
-          const ch = ['%', '#', '8', 'X'][Math.floor(rng() * 4)];
-          const c = (x < rightRibbonX) ? COLOR_GIFT_BLUE : COLOR_GIFT_DARK_BLUE;
-          grid[y][x] = { char: ch, color: c, glow: 0.35, layer: 'gift', y: y };
-        }
-      }
-    }
-    // Right Gift Bow
-    grid[50][rightRibbonX - 1] = { char: '{', color: COLOR_GIFT_RIBBON_CYAN, glow: 0.85, layer: 'gift', y: 50 };
-    grid[50][rightRibbonX]     = { char: '*', color: COLOR_STAR_CORE, glow: 0.95, layer: 'gift', y: 50 };
-    grid[50][rightRibbonX + 1] = { char: '}', color: COLOR_GIFT_RIBBON_CYAN, glow: 0.85, layer: 'gift', y: 50 };
-
-    // 5. Tree Trunk (Center base)
-    for (let y = 49; y <= 55; y++) {
-      for (let dx = -3; dx <= 3; dx++) {
-        const x = centerX + dx;
-        const shade = Math.abs(dx) <= 1 ? '#78350f' : '#451a03';
-        grid[y][x] = { char: rng() < 0.5 ? '#' : '%', color: shade, glow: 0.25, layer: 'trunk', y: y };
-      }
-    }
-
-    // 6. Tree Foliage (Pine Branches with natural tiers)
-    const treeApexY = 11;
-    const treeBaseY = 50;
-    const foliageSet = new Set();
-
-    for (let y = treeApexY; y <= treeBaseY; y++) {
-      const v = (y - treeApexY) / (treeBaseY - treeApexY);
-      const tierPhase = (v * 5.6) % 1.0;
-      const tierScallop = Math.pow(tierPhase, 0.65) * 3.4;
-      let halfW = 1.6 + 25.0 * Math.pow(v, 0.94) + tierScallop;
-      halfW = Math.min(halfW, 29.0);
-
-      const xStart = Math.round(centerX - halfW);
-      const xEnd = Math.round(centerX + halfW);
-
-      for (let x = xStart; x <= xEnd; x++) {
-        if (x < 0 || x >= COLS) continue;
-        foliageSet.add(`${x},${y}`);
-
-        const dist = Math.abs(x - centerX);
-        const normR = dist / Math.max(0.5, halfW);
-
-        let ch, c, glow;
-        if (normR < 0.35) {
-          ch = PINE_CHARS_DENSE[Math.floor(rng() * PINE_CHARS_DENSE.length)];
-          c = rng() < 0.4 ? COLOR_PINE_DEEP : (rng() < 0.7 ? COLOR_PINE_DARK : COLOR_PINE_MID);
-          glow = 0.25;
-        } else if (normR < 0.72) {
-          ch = PINE_CHARS_MID[Math.floor(rng() * PINE_CHARS_MID.length)];
-          c = rng() < 0.5 ? COLOR_PINE_MID : COLOR_PINE_BRIGHT;
-          glow = 0.42;
-        } else {
-          ch = PINE_CHARS_LIGHT[Math.floor(rng() * PINE_CHARS_LIGHT.length)];
-          c = rng() < 0.4 ? COLOR_PINE_BRIGHT : (rng() < 0.7 ? COLOR_PINE_TIP : COLOR_PINE_LIME);
-          glow = 0.58;
-        }
-        grid[y][x] = { char: ch, color: c, glow: glow, layer: 'foliage', y: y };
-      }
-    }
-
-    // Inject reference special character clusters (0.0, 0**, etc.)
-    const specialClusters = [
-      [0.0, 0.18, '0.0#+'],
-      [-0.2, 0.22, '==+0.0°0::++'],
-      [0.15, 0.26, '*.0.0..'],
-      [-0.35, 0.34, '00#%'],
-      [0.28, 0.36, '0..00'],
-      [-0.15, 0.48, '0.0#+'],
-      [0.32, 0.58, '0**'],
-    ];
-    specialClusters.forEach(([xRat, yRat, token]) => {
-      const sy = Math.round(treeApexY + yRat * (treeBaseY - treeApexY));
-      const v = (sy - treeApexY) / (treeBaseY - treeApexY);
-      const halfW = 1.6 + 25.0 * Math.pow(v, 0.94);
-      const sx = Math.round(centerX + xRat * halfW) - Math.floor(token.length / 2);
-      for (let i = 0; i < token.length; i++) {
-        const px = sx + i;
-        if (foliageSet.has(`${px},${sy}`)) {
-          const ch = token[i];
-          const col = (ch === '0' || ch === '.') ? COLOR_PINE_LIME : COLOR_PINE_BRIGHT;
-          grid[sy][px] = { char: ch, color: col, glow: 0.55, layer: 'foliage', y: sy };
-        }
-      }
-    });
-
-    // 7. Spiraling Golden Garland Lights
-    const garlandCount = 280;
-    for (let i = 0; i < garlandCount; i++) {
-      const frac = i / garlandCount;
-      const y = Math.round(treeApexY + frac * (treeBaseY - treeApexY));
-      const v = (y - treeApexY) / (treeBaseY - treeApexY);
-      const angle = v * 5.2 * 2.0 * Math.PI - 0.4;
-      const halfW = 1.6 + 25.0 * Math.pow(v, 0.94);
-      const z = Math.cos(angle);
-
-      if (z > -0.25) {
-        const xOffset = halfW * Math.sin(angle) * 0.88;
-        const x = Math.round(centerX + xOffset);
-
-        for (const dy of [-1, 0]) {
-          const cy = y + dy;
-          if (foliageSet.has(`${x},${cy}`)) {
-            const gChar = GARLAND_CHARS[Math.floor(rng() * GARLAND_CHARS.length)];
-            const col = z > 0.4 ? COLOR_GARLAND_BRIGHT : COLOR_GARLAND_GOLD;
-            grid[cy][x] = { char: gChar, color: col, glow: 0.85 + z * 0.15, layer: 'garland', y: cy };
-          }
-        }
-      }
-    }
-
-    // 8. Bells & Baubles
-    const ornaments = [
-      [-0.35, 0.22, 'red'], [0.32, 0.25, 'red'], [0.05, 0.28, 'bell'],
-      [-0.52, 0.38, 'bell'], [0.48, 0.39, 'red'], [-0.15, 0.42, 'red'],
-      [0.22, 0.45, 'bell'], [-0.42, 0.52, 'red'], [0.38, 0.53, 'red'],
-      [0.02, 0.56, 'bell'], [-0.62, 0.62, 'red'], [0.58, 0.63, 'bell'],
-      [-0.25, 0.65, 'red'], [0.28, 0.68, 'red'], [-0.50, 0.74, 'bell'],
-      [0.45, 0.75, 'red'], [-0.08, 0.78, 'bell'], [0.12, 0.81, 'red'],
-      [-0.35, 0.85, 'bell'], [0.35, 0.86, 'red'], [-0.68, 0.89, 'red'],
-      [0.65, 0.90, 'bell'], [-0.18, 0.93, 'bell'], [0.20, 0.94, 'red'],
-    ];
-
-    ornaments.forEach(([xRat, yRat, otype]) => {
-      const oy = Math.round(treeApexY + yRat * (treeBaseY - treeApexY));
-      const v = (oy - treeApexY) / (treeBaseY - treeApexY);
-      const halfW = 1.6 + 25.0 * Math.pow(v, 0.94);
-      const ox = Math.round(centerX + xRat * halfW);
-
-      if (foliageSet.has(`${ox},${oy}`)) {
-        if (otype === 'red') {
-          for (const ddx of [-1, 0]) {
-            const px = ox + ddx;
-            if (foliageSet.has(`${px},${oy}`)) {
-              const ch = ddx === 0 ? '@' : '%';
-              const col = ddx === 0 ? COLOR_ORNAMENT_RED : COLOR_ORNAMENT_DARK_RED;
-              grid[oy][px] = { char: ch, color: col, glow: 0.85, layer: 'ornament', y: oy };
-            }
-          }
-          if (foliageSet.has(`${ox},${oy - 1}`)) {
-            grid[oy - 1][ox] = { char: '.', color: COLOR_ORNAMENT_SHINE, glow: 0.95, layer: 'ornament', y: oy - 1 };
-          }
-        } else if (otype === 'bell') {
-          if (foliageSet.has(`${ox},${oy - 1}`)) {
-            grid[oy - 1][ox] = { char: '^', color: COLOR_GARLAND_WARM, glow: 0.8, layer: 'bell', y: oy - 1 };
-          }
-          grid[oy][ox] = { char: 'e', color: COLOR_BELL_GOLD, glow: 0.95, layer: 'bell', y: oy };
-          if (foliageSet.has(`${ox - 1},${oy}`)) {
-            grid[oy][ox - 1] = { char: 'o', color: COLOR_BELL_GOLD, glow: 0.85, layer: 'bell', y: oy };
-          }
-          if (foliageSet.has(`${ox + 1},${oy}`)) {
-            grid[oy][ox + 1] = { char: 'o', color: COLOR_BELL_GOLD, glow: 0.85, layer: 'bell', y: oy };
-          }
-          if (foliageSet.has(`${ox},${oy + 1}`)) {
-            grid[oy + 1][ox] = { char: '.', color: COLOR_STAR_CORE, glow: 0.9, layer: 'bell', y: oy + 1 };
-          }
-        }
-      }
-    });
-
-    // 9. Top Star
-    const starRows = [
-      [5, ['e']],
-      [6, ['e', 'e', 'e']],
-      [7, ['e', 'e', 'e', 'e', 'e']],
-      [8, ['e', 'e', 'e', 'e', 'e', 'e', 'e']],
-      [9, ['e', 'e', 'e', 'e', 'e']],
-      [10, ['e', 'e', 'e']],
-    ];
-    starRows.forEach(([sy, chars]) => {
-      const len = chars.length;
-      const startX = centerX - Math.floor(len / 2);
-      chars.forEach((ch, idx) => {
-        const sx = startX + idx;
-        const isCore = (idx === Math.floor(len / 2) && sy === 8);
-        grid[sy][sx] = {
-          char: isCore ? '@' : ch,
-          color: isCore ? COLOR_STAR_CORE : COLOR_STAR_GOLD,
-          glow: 1.0,
-          layer: 'star',
-          y: sy
-        };
-      });
-    });
-
-    // 10. Radiant Star Beams
-    for (let dy = 1; dy <= 4; dy++) {
-      grid[5 - dy][centerX] = { char: '|', color: COLOR_STAR_BEAM, glow: Math.max(0.3, 1.0 - dy * 0.18), layer: 'beam', y: 5 - dy };
-    }
-    for (let d = 1; d <= 4; d++) {
-      grid[5 - d][centerX - d * 2] = { char: '\\', color: COLOR_STAR_BEAM, glow: Math.max(0.3, 1.0 - d * 0.18), layer: 'beam', y: 5 - d };
-      grid[5 - d][centerX + d * 2] = { char: '/', color: COLOR_STAR_BEAM, glow: Math.max(0.3, 1.0 - d * 0.18), layer: 'beam', y: 5 - d };
-    }
-    for (let dx = 1; dx <= 5; dx++) {
-      grid[8][centerX - 4 - dx] = { char: '-', color: COLOR_STAR_BEAM, glow: Math.max(0.3, 1.0 - dx * 0.15), layer: 'beam', y: 8 };
-      grid[8][centerX + 4 + dx] = { char: '-', color: COLOR_STAR_BEAM, glow: Math.max(0.3, 1.0 - dx * 0.15), layer: 'beam', y: 8 };
-    }
-    for (let d = 1; d <= 3; d++) {
-      grid[10 + d][centerX - d * 2] = { char: '/', color: COLOR_STAR_BEAM, glow: Math.max(0.3, 0.9 - d * 0.2), layer: 'beam', y: 10 + d };
-      grid[10 + d][centerX + d * 2] = { char: '\\', color: COLOR_STAR_BEAM, glow: Math.max(0.3, 0.9 - d * 0.2), layer: 'beam', y: 10 + d };
-    }
-
-    return grid;
-  }
-
-  // Snowfall Particle Engine
+  // Snowflake Particle Physics System
+  const SNOW_CHARS = ['.', '·', '*', '+', 'o', '❄'];
   class SnowSystem {
-    constructor(count = 110) {
+    constructor(count = 120) {
       this.count = count;
       this.flakes = [];
-      const rng = createRng(99);
       for (let i = 0; i < count; i++) {
         this.flakes.push({
-          x: rng() * COLS,
-          y: rng() * ROWS,
-          speed: 0.35 + rng() * 0.75,
-          swayAmp: 0.3 + rng() * 1.4,
-          swayFreq: 0.5 + rng() * 1.5,
-          swayPhase: rng() * Math.PI * 2,
-          char: SNOW_CHARS[Math.floor(rng() * SNOW_CHARS.length)],
-          color: rng() < 0.3 ? '#ffffff' : (rng() < 0.6 ? '#e2e8f0' : '#cbd5e1'),
-          glow: 0.4 + rng() * 0.5
+          x: Math.random(),
+          y: Math.random(),
+          speed: 0.04 + Math.random() * 0.08,
+          swayAmp: 0.01 + Math.random() * 0.025,
+          swayFreq: 0.8 + Math.random() * 1.5,
+          swayPhase: Math.random() * Math.PI * 2,
+          char: SNOW_CHARS[Math.floor(Math.random() * SNOW_CHARS.length)],
+          size: Math.floor(10 + Math.random() * 12),
+          alpha: 0.4 + Math.random() * 0.55
         });
       }
     }
 
     update(dt, t) {
       this.flakes.forEach(f => {
-        f.y += f.speed * dt * 8.5;
-        f.x += Math.sin(t * f.swayFreq + f.swayPhase) * f.swayAmp * dt * 2.8;
-        if (f.y >= ROWS) {
+        f.y += f.speed * dt;
+        f.x += Math.sin(t * f.swayFreq + f.swayPhase) * f.swayAmp * dt;
+        if (f.y >= 1.0) {
           f.y = 0;
-          f.x = Math.random() * COLS;
+          f.x = Math.random();
         }
-        if (f.x < 0) f.x += COLS;
-        else if (f.x >= COLS) f.x -= COLS;
+        if (f.x < 0) f.x += 1.0;
+        else if (f.x >= 1.0) f.x -= 1.0;
       });
     }
   }
 
   // Interactive Click Sparkles
   const userSparkles = [];
-  function addSparkles(gridX, gridY) {
-    for (let i = 0; i < 20; i++) {
+  function addSparkles(px, py) {
+    for (let i = 0; i < 22; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 1.0 + Math.random() * 4.0;
+      const speed = 40 + Math.random() * 120;
       userSparkles.push({
-        x: gridX,
-        y: gridY,
+        x: px,
+        y: py,
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 0.5,
-        char: ['*', '✦', '·', '+', 'o', '❄'][Math.floor(Math.random() * 6)],
+        vy: Math.sin(angle) * speed - 20,
+        char: ['*', '✦', '·', '+', 'o', '❄', '0'][Math.floor(Math.random() * 7)],
         color: ['#fef08a', '#facc15', '#ffffff', '#86efac', '#fca5a5'][Math.floor(Math.random() * 5)],
         life: 1.0,
         decay: 0.02 + Math.random() * 0.03
@@ -473,18 +108,16 @@
     }
   }
 
-  const staticScene = buildSceneModel();
-  const snowSystem = new SnowSystem(110);
-
+  const snowSystem = new SnowSystem(120);
   let isPlaying = true;
   let isMuted = false;
   let animTime = 0.0;
   let lastFrameTime = performance.now();
   let viewMode = 'canvas';
 
-  let cellWidth = 11;
-  let cellHeight = 18;
-  let fontSize = 16;
+  // Canvas Sizing
+  const NATIVE_W = 1072;
+  const NATIVE_H = 1180;
 
   function resizeCanvases() {
     const dpr = window.devicePixelRatio || 1;
@@ -492,22 +125,15 @@
     const vw = viewport.clientWidth;
     const vh = viewport.clientHeight;
 
-    cellWidth = Math.max(7, Math.floor(vw / (COLS + 4)));
-    cellHeight = Math.floor(cellWidth * 1.62);
-    if (cellHeight * (ROWS + 4) > vh) {
-      cellHeight = Math.max(10, Math.floor(vh / (ROWS + 4)));
-      cellWidth = Math.max(6, Math.floor(cellHeight / 1.62));
-    }
-    fontSize = Math.floor(cellHeight * 0.88);
-
-    const canvasW = COLS * cellWidth;
-    const canvasH = ROWS * cellHeight;
+    const scale = Math.min((vw * 0.95) / NATIVE_W, (vh * 0.88) / NATIVE_H);
+    const canvasW = Math.round(NATIVE_W * scale);
+    const canvasH = Math.round(NATIVE_H * scale);
 
     treeCanvas.width = canvasW * dpr;
     treeCanvas.height = canvasH * dpr;
     treeCanvas.style.width = `${canvasW}px`;
     treeCanvas.style.height = `${canvasH}px`;
-    treeCtx.scale(dpr, dpr);
+    treeCtx.scale(dpr * scale, dpr * scale);
 
     skyCanvas.width = window.innerWidth * dpr;
     skyCanvas.height = window.innerHeight * dpr;
@@ -519,7 +145,7 @@
   window.addEventListener('resize', resizeCanvases);
   resizeCanvases();
 
-  // Animation Loop
+  // Main Render Loop
   function render(now) {
     const dt = Math.min(0.1, (now - lastFrameTime) / 1000);
     lastFrameTime = now;
@@ -532,31 +158,31 @@
     // Update Sparkles
     for (let i = userSparkles.length - 1; i >= 0; i--) {
       const sp = userSparkles[i];
-      sp.x += sp.vx * dt * 5.0;
-      sp.y += sp.vy * dt * 5.0;
+      sp.x += sp.vx * dt;
+      sp.y += sp.vy * dt;
       sp.life -= sp.decay;
       if (sp.life <= 0) userSparkles.splice(i, 1);
     }
 
-    // Update Growth Progress Bar
-    const progress = Math.min(1.0, animTime / 11.5);
+    // Update Progress Bar & Synced Lyrics
+    const progress = Math.min(1.0, animTime / TOTAL_BUILD_DURATION);
     progressBar.style.setProperty('--progress', `${progress * 100}%`);
     if (progress < 1.0) {
       progressBarWrap.classList.remove('done');
-      if (animTime < 1.5) progressLabel.textContent = "I want you to know...";
-      else if (animTime < 3.0) progressLabel.textContent = "'Cause I'm Mrs. Snow...";
-      else if (animTime < 6.0) progressLabel.textContent = "Tree Ascending... 🌲";
-      else if (animTime < 9.5) progressLabel.textContent = "So come on, let's go...";
-      else progressLabel.textContent = "⭐ Let's go below zero! ⭐";
+      if (animTime < 2.0) progressLabel.textContent = "Don't cry, snowman...";
+      else if (animTime < 4.0) progressLabel.textContent = "Not in front of me...";
+      else if (animTime < 7.5) progressLabel.textContent = "Tree Ascending... 🌲";
+      else if (animTime < 12.0) progressLabel.textContent = "Branches Blooming... ✨";
+      else progressLabel.textContent = "⭐ Pinnacle Star Igniting! ⭐";
     } else {
       progressLabel.textContent = 'Merry Christmas! 🎄';
-      if (animTime > 15.0) progressBarWrap.classList.add('done');
+      if (animTime > 18.0) progressBarWrap.classList.add('done');
     }
 
     // Draw Sky Background
     drawSkyBackground();
 
-    // Draw Tree ASCII Canvas
+    // Draw Tree Animation
     if (viewMode === 'canvas') {
       drawTreeFrame(animTime);
     }
@@ -578,142 +204,127 @@
   }
 
   function drawTreeFrame(t) {
-    const canvasW = COLS * cellWidth;
-    const canvasH = ROWS * cellHeight;
-    treeCtx.clearRect(0, 0, canvasW, canvasH);
+    treeCtx.clearRect(0, 0, NATIVE_W, NATIVE_H);
 
-    treeCtx.font = `bold ${fontSize}px 'Fira Code', 'Courier New', monospace`;
-    treeCtx.textBaseline = 'top';
-
-    // Pacing synchronized with the vocal track
-    const groundProgress = Math.min(1.0, t / 1.5);
-    const groundCutoffY = (ROWS - 1) - groundProgress * ((ROWS - 1) - 47);
-
-    const giftProgress = Math.min(1.0, Math.max(0.0, (t - 1.2) / 1.6));
-    const giftCutoffY = (ROWS - 2) - giftProgress * 11;
-
-    const treeProgress = Math.min(1.0, Math.max(0.0, (t - 2.5) / 7.0));
-    const treeGrowthY = 56 - treeProgress * (56 - 11);
-
-    const starProgress = Math.min(1.0, Math.max(0.0, (t - 9.5) / 2.0));
-
-    for (let y = 0; y < ROWS; y++) {
-      for (let x = 0; x < COLS; x++) {
-        const cell = staticScene[y][x];
-        let visible = false;
-        let char = cell.char;
-        let color = cell.color;
-        let glow = cell.glow;
-
-        if (cell.layer === 'sky') {
-          visible = (char !== ' ');
-          if (visible) {
-            const twinkle = 0.5 + 0.5 * Math.sin(t * 2.5 + x * 0.7 + y * 1.3);
-            glow *= twinkle;
-          }
-        } else if (cell.layer === 'ground') {
-          if (y >= groundCutoffY) {
-            visible = true;
-            const age = y - groundCutoffY;
-            const flash = 1.0 + Math.max(0, 1.0 - age) * 0.5;
-            glow *= flash;
-          }
-        } else if (cell.layer === 'gift') {
-          if (y >= giftCutoffY) {
-            visible = true;
-          }
-        } else if (['trunk', 'foliage', 'garland', 'ornament', 'bell'].includes(cell.layer)) {
-          if (y >= treeGrowthY) {
-            visible = true;
-            const dist = Math.abs(y - treeGrowthY);
-
-            // Leading crest flash as layer grows
-            if (dist < 1.8 && treeProgress < 1.0) {
-              glow = 1.0;
-              if (Math.random() < 0.25) {
-                char = ['*', '+', '#', 'o'][Math.floor(Math.random() * 4)];
-                color = COLOR_STAR_CORE;
-              }
-            }
-
-            // Post-growth twinkling
-            if (t > 9.5) {
-              if (cell.layer === 'garland') {
-                const wave = Math.sin(t * 4.0 - y * 0.4 + x * 0.1);
-                glow = 0.7 + 0.3 * wave;
-              } else if (['ornament', 'bell'].includes(cell.layer)) {
-                const shimmer = Math.sin(t * 3.0 + x * 0.5 + y * 0.8);
-                glow = 0.75 + 0.25 * shimmer;
-              }
-            }
-          }
-        } else if (cell.layer === 'star') {
-          if (starProgress > 0.0) {
-            visible = true;
-            const pulse = 1.0 + 0.25 * Math.sin(t * 5.0);
-            glow *= pulse;
-          }
-        } else if (cell.layer === 'beam') {
-          if (starProgress >= 0.4) {
-            const beamFrac = (starProgress - 0.4) / 0.6;
-            const dist = Math.sqrt(Math.pow(x - COLS / 2, 2) + Math.pow(y - 8, 2));
-            if (dist <= beamFrac * 12.0) {
-              visible = true;
-              const pulse = 0.7 + 0.3 * Math.sin(t * 3.5 + dist * 0.5);
-              glow *= pulse;
-            }
-          }
-        }
-
-        if (visible && char !== ' ') {
-          const px = x * cellWidth;
-          const py = y * cellHeight;
-
-          if (glow > 0.4) {
-            treeCtx.shadowColor = color;
-            treeCtx.shadowBlur = Math.round(glow * 10);
-          } else {
-            treeCtx.shadowBlur = 0;
-          }
-
-          treeCtx.fillStyle = color;
-          treeCtx.fillText(char, px, py);
-        }
-      }
+    // 1. Draw Starry Night Base
+    if (skyLoaded) {
+      treeCtx.drawImage(skyImg, 0, 0, NATIVE_W, NATIVE_H);
+    } else {
+      treeCtx.fillStyle = '#0a0e1a';
+      treeCtx.fillRect(0, 0, NATIVE_W, NATIVE_H);
     }
 
-    // Snowflakes
-    treeCtx.shadowBlur = 4;
+    if (!refLoaded) return;
+
+    // 2. Progressive Bottom-to-Top Reveal Calculation
+    const groundYBottom = 1180;
+    const groundYTop = 820;
+    const treeYBottom = 1060;
+    const treeYTop = 180;
+
+    const groundProg = Math.min(1.0, t / 2.0);
+    const currGroundY = Math.round(groundYBottom - groundProg * (groundYBottom - groundYTop));
+
+    const treeProg = Math.min(1.0, Math.max(0.0, (t - 3.5) / 9.0));
+    const currTreeY = Math.round(treeYBottom - treeProg * (treeYBottom - treeYTop));
+
+    const starProg = Math.min(1.0, Math.max(0.0, (t - 12.5) / 2.0));
+
+    // Save context for clipping mask
+    treeCtx.save();
+    treeCtx.beginPath();
+
+    // Reveal ground from bottom up
+    if (groundProg > 0) {
+      treeCtx.rect(0, currGroundY, NATIVE_W, NATIVE_H - currGroundY);
+    }
+
+    // Reveal tree from bottom up
+    if (treeProg > 0) {
+      treeCtx.rect(170, currTreeY, 730, treeYBottom - currTreeY);
+    }
+
+    // Reveal crown star and celestial beams
+    if (starProg > 0) {
+      const starY = Math.round(treeYTop - starProg * treeYTop);
+      treeCtx.rect(340, starY, 400, treeYTop + 40 - starY);
+    }
+
+    if (t >= 14.5) {
+      // Entire reference image fully active
+      treeCtx.rect(0, 0, NATIVE_W, NATIVE_H);
+    }
+
+    treeCtx.clip();
+
+    // Draw the authentic reference image
+    treeCtx.drawImage(refImg, 0, 0, NATIVE_W, NATIVE_H);
+    treeCtx.restore();
+
+    // 3. Dynamic Sparkle Embers Riding the Leading Edge
+    if (treeProg > 0.0 && treeProg < 1.0) {
+      const halfW = 20 + Math.round(330 * Math.pow(treeProg, 0.85));
+      const cx = NATIVE_W / 2;
+      treeCtx.font = "bold 18px 'Fira Code', 'Courier New', monospace";
+      treeCtx.shadowBlur = 10;
+      for (let i = 0; i < 12; i++) {
+        const sx = cx - halfW + Math.random() * (halfW * 2);
+        const sy = currTreeY + (Math.random() - 0.5) * 16;
+        const ch = ['*', '+', '#', 'o', '0', 'e'][Math.floor(Math.random() * 6)];
+        const col = ['#fef08a', '#22c55e', '#ffffff', '#facc15'][Math.floor(Math.random() * 4)];
+        treeCtx.fillStyle = col;
+        treeCtx.shadowColor = col;
+        treeCtx.fillText(ch, sx, sy);
+      }
+      treeCtx.shadowBlur = 0;
+    }
+
+    // 4. Star Pulse & Radiant Glow after Apex Reached
+    if (starProg > 0.0) {
+      const pulse = 1.0 + 0.15 * Math.sin(t * 4.5);
+      treeCtx.save();
+      treeCtx.beginPath();
+      treeCtx.arc(536, 110, 45 * pulse, 0, Math.PI * 2);
+      treeCtx.fillStyle = 'rgba(254, 240, 138, 0.12)';
+      treeCtx.shadowColor = '#facc15';
+      treeCtx.shadowBlur = 25 * pulse;
+      treeCtx.fill();
+      treeCtx.restore();
+    }
+
+    // 5. White Pixelated Snowfall
     treeCtx.shadowColor = '#ffffff';
+    treeCtx.shadowBlur = 4;
     snowSystem.flakes.forEach(f => {
-      const sx = Math.floor(f.x) * cellWidth;
-      const sy = Math.floor(f.y) * cellHeight;
-      treeCtx.fillStyle = f.color;
+      const sx = f.x * NATIVE_W;
+      const sy = f.y * NATIVE_H;
+      treeCtx.font = `bold ${f.size}px 'Fira Code', 'Courier New', monospace`;
+      treeCtx.fillStyle = `rgba(255, 255, 255, ${f.alpha})`;
       treeCtx.fillText(f.char, sx, sy);
     });
+    treeCtx.shadowBlur = 0;
 
-    // Interactive User Sparkles
+    // 6. Interactive Click Sparkles
     userSparkles.forEach(sp => {
-      const px = sp.x * cellWidth;
-      const py = sp.y * cellHeight;
       treeCtx.shadowColor = sp.color;
       treeCtx.shadowBlur = 12 * sp.life;
       treeCtx.fillStyle = sp.color;
       treeCtx.globalAlpha = Math.max(0, sp.life);
-      treeCtx.fillText(sp.char, px, py);
+      treeCtx.font = "bold 20px 'Fira Code', monospace";
+      treeCtx.fillText(sp.char, sp.x, sp.y);
     });
     treeCtx.globalAlpha = 1.0;
     treeCtx.shadowBlur = 0;
   }
 
-  // Interactive Click on Canvas for Sparkles
+  // Interactive Click on Canvas
   treeCanvas.addEventListener('pointerdown', (e) => {
     const rect = treeCanvas.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-    const gridX = clickX / cellWidth;
-    const gridY = clickY / cellHeight;
-    addSparkles(gridX, gridY);
+    const scaleX = NATIVE_W / rect.width;
+    const scaleY = NATIVE_H / rect.height;
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
+    addSparkles(clickX, clickY);
   });
 
   // Audio Handlers

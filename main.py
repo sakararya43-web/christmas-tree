@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
 Festive Christmas Tree Animation in Terminal
-Synchronized to Sia - Snowman (Chorus Main Part):
-"I want you to know that I'm never leaving..."
+Directly sampled from reference.jpeg for 100% visual fidelity!
+Synchronized to Sia - Snowman starting from:
+"Don't cry, snowman, not in front of me..."
 Features:
-- Bottom-to-top progressive growth animation matching reference photo
-- Ground perspective grid, snow bank, wrapped gifts, pine foliage, bells & ornaments
-- Golden crown star with radiant light beams igniting at the vocal drop
-- White pixelated snowfall with dynamic physics
-- Plays "Snowman" by Sia via pygame.mixer starting directly at the chorus
+- Progressive bottom-to-top growth animation
+- Perspective ground lines, wrapped gifts, pine foliage, bells & ornaments
+- Crown star with radiant beams igniting at the apex
+- White pixelated snowfall physics
+- Background audio via pygame.mixer
 - ANSI Truecolor terminal output for vibrant retro neon glow
 """
 
@@ -57,17 +58,17 @@ def render_to_terminal(frame, terminal_width, terminal_height, elapsed):
     output_lines = []
     output_lines.append("\033[?25l\033[H")
 
-    # Header banner with synced lyrics
-    if elapsed < 1.5:
-        lyric = "🎶 'I want you to know that I'm never leaving...'"
-    elif elapsed < 3.0:
-        lyric = "🎶 ''Cause I'm Mrs. Snow, 'til death we'll be freezing...'"
-    elif elapsed < 6.0:
-        lyric = "🎶 'Yeah, you are my home, my home for all seasons...'"
-    elif elapsed < 9.5:
-        lyric = "🎶 'So come on, let's go...'"
+    # Header banner with synced lyrics starting from "Don't cry snowman"
+    if elapsed < 2.0:
+        lyric = "🎶 'Don't cry, snowman, not in front of me...'"
+    elif elapsed < 4.0:
+        lyric = "🎶 'Who'll catch your tears if you can't catch me, darling...'"
+    elif elapsed < 8.0:
+        lyric = "🌲 'If you can't catch me, darling...' [Tree Ascending]"
     elif elapsed < 12.0:
-        lyric = "⭐ 'Let's go below zero and hide from the sun!' ⭐"
+        lyric = "✨ 'Don't cry, snowman, don't leave me this way...'"
+    elif elapsed < 14.5:
+        lyric = "⭐ 'A puddle of water can't hold me close, baby!' ⭐"
     else:
         lyric = "❄  MERRY CHRISTMAS  ❄  [ Sia - Snowman ]"
 
@@ -95,7 +96,7 @@ def render_to_terminal(frame, terminal_width, terminal_height, elapsed):
         line_parts.append("\033[0m")
         output_lines.append("".join(line_parts))
 
-    footer = "Press Ctrl+C to exit | Bottom-to-Top Growth Synced with Chorus"
+    footer = "Press Ctrl+C to exit | Bottom-to-Top Growth | Sia - Snowman"
     footer_pad = max(0, (terminal_width - len(footer)) // 2)
     output_lines.append("\n" + " " * footer_pad + "\033[38;2;148;163;184m" + footer + "\033[0m")
 
@@ -107,8 +108,8 @@ def main():
     os.system("cls" if os.name == "nt" else "clear")
 
     print("\033[?25l")
-    print("Loading Christmas Tree Animation (Sia - Snowman Main Chorus)...")
-    static_scene = build_static_scene(WIDTH, HEIGHT)
+    print("Loading Christmas Tree Animation (Sia - Snowman)...")
+    static_scene = build_static_scene()
     snow = SnowfallSystem(WIDTH, HEIGHT, count=90)
 
     audio_file = os.path.join(os.path.dirname(__file__), "snowman.mp3")
