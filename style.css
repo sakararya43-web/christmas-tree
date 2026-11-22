@@ -1,0 +1,449 @@
+:root {
+  --bg-deep: #060913;
+  --bg-panel: rgba(13, 19, 36, 0.72);
+  --border-glow: rgba(250, 204, 21, 0.28);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --gold-glow: #fef08a;
+  --gold-accent: #facc15;
+  --crimson-accent: #ef4444;
+  --pine-green: #22c55e;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-deep);
+  color: var(--text-main);
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Background canvas */
+#sky-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Main Container Stage */
+.stage {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  background: linear-gradient(180deg, rgba(6, 9, 19, 0.92) 0%, rgba(6, 9, 19, 0) 100%);
+  pointer-events: auto;
+}
+
+.holiday-title {
+  font-family: 'Mountains of Christmas', cursive;
+  font-size: 2.1rem;
+  letter-spacing: 1px;
+  color: #fffbeb;
+  text-shadow: 0 0 12px rgba(254, 240, 138, 0.75), 0 0 24px rgba(234, 179, 8, 0.4);
+}
+
+.subtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.song-title {
+  color: #fef08a;
+  font-weight: 500;
+}
+
+.badge {
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: rgba(34, 197, 94, 0.18);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #86efac;
+  font-family: 'Fira Code', monospace;
+}
+
+/* Header Action Buttons */
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(250, 204, 21, 0.5);
+  transform: translateY(-1px);
+}
+
+.icon-btn.active {
+  border-color: var(--gold-accent);
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
+  color: var(--gold-glow);
+}
+
+/* Viewport Area */
+.viewport {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* CRT Scanline Overlay */
+.crt-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.02),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.02)
+  );
+  background-size: 100% 4px, 6px 100%;
+  z-index: 5;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.crt-overlay.disabled {
+  opacity: 0;
+}
+
+/* Tree Canvas Element */
+#tree-canvas {
+  display: none;
+  max-width: 96vw;
+  max-height: 78vh;
+  object-fit: contain;
+  cursor: crosshair;
+  filter: drop-shadow(0 0 16px rgba(34, 197, 94, 0.25));
+  transition: filter 0.3s ease;
+}
+
+#tree-canvas.active {
+  display: block;
+}
+
+#tree-canvas.bloom {
+  filter: drop-shadow(0 0 18px rgba(250, 204, 21, 0.35)) drop-shadow(0 0 32px rgba(34, 197, 94, 0.35));
+}
+
+/* Video Container Element */
+#video-container {
+  display: none;
+  position: relative;
+  max-width: 96vw;
+  max-height: 78vh;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 35px rgba(250, 204, 21, 0.25);
+}
+
+#video-container.active {
+  display: block;
+}
+
+#hd-video {
+  max-width: 96vw;
+  max-height: 78vh;
+  display: block;
+  border-radius: 8px;
+}
+
+.video-watermark {
+  position: absolute;
+  bottom: 12px;
+  right: 14px;
+  font-size: 0.75rem;
+  font-family: 'Fira Code', monospace;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: #94a3b8;
+}
+
+/* Start Audio Prompt Overlay */
+.audio-prompt {
+  position: absolute;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 9, 19, 0.65);
+  backdrop-filter: blur(10px);
+  padding: 24px 32px;
+  border-radius: 16px;
+  border: 1px solid rgba(250, 204, 21, 0.4);
+  box-shadow: 0 0 35px rgba(250, 204, 21, 0.3);
+  animation: pulse-glow 2.4s infinite ease-in-out;
+}
+
+.audio-prompt.hidden {
+  display: none;
+}
+
+.start-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 28px;
+  cursor: pointer;
+  font-size: 1.05rem;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.start-btn:hover {
+  transform: scale(1.04);
+  box-shadow: 0 8px 26px rgba(239, 68, 68, 0.65);
+}
+
+.play-icon {
+  font-size: 1.8rem;
+  color: #fef08a;
+}
+
+.start-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.start-text strong {
+  font-size: 1.15rem;
+  letter-spacing: 0.5px;
+}
+
+.start-text small {
+  font-size: 0.85rem;
+  color: #fef08a;
+  opacity: 0.9;
+}
+
+/* Progress Wrap */
+.progress-wrap {
+  position: absolute;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(13, 19, 36, 0.7);
+  backdrop-filter: blur(6px);
+  padding: 6px 16px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.78rem;
+  color: var(--gold-glow);
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.progress-wrap.done {
+  opacity: 0;
+}
+
+.progress-bar {
+  width: 140px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--progress, 0%);
+  background: linear-gradient(90deg, #22c55e, #facc15);
+  border-radius: 9999px;
+  box-shadow: 0 0 8px var(--gold-accent);
+}
+
+/* Bottom Controls Deck */
+.controls-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: linear-gradient(0deg, rgba(6, 9, 19, 0.95) 0%, rgba(6, 9, 19, 0) 100%);
+  flex-wrap: wrap;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.controls-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 0.86rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(250, 204, 21, 0.5);
+  transform: translateY(-1px);
+}
+
+.control-btn.primary {
+  background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+  border-color: #22c55e;
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.35);
+}
+
+.control-btn.primary:hover {
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.55);
+}
+
+.vol-slider {
+  width: 90px;
+  accent-color: var(--gold-accent);
+  cursor: pointer;
+}
+
+.info-tag {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Unmute Toast */
+.unmute-toast {
+  position: fixed;
+  bottom: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--gold-accent);
+  border-radius: 9999px;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  z-index: 50;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  animation: bounce-in 0.4s ease;
+}
+
+.unmute-toast.hidden {
+  display: none;
+}
+
+#toast-unmute-btn {
+  background: var(--gold-accent);
+  color: #0f172a;
+  border: none;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba(250, 204, 21, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 45px rgba(250, 204, 21, 0.5);
+  }
+}
+
+@keyframes bounce-in {
+  0% { transform: translate(-50%, 20px); opacity: 0; }
+  100% { transform: translate(-50%, 0); opacity: 1; }
+}
+
+@media (max-width: 680px) {
+  .holiday-title {
+    font-size: 1.6rem;
+  }
+  .meta-group {
+    display: none;
+  }
+  .controls-bar {
+    justify-content: center;
+  }
+}

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Merry Christmas 🎄 | ASCII Tree Animation & Sia - Snowman</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Mountains+of+Christmas:wght@700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient Audio: Sia - Snowman -->
+  <audio id="bg-audio" src="snowman.mp3" preload="auto" loop></audio>
+
+  <!-- Background Starry Glow Canvas -->
+  <canvas id="sky-canvas"></canvas>
+
+  <!-- Main Animation Container -->
+  <div class="stage">
+    <!-- Header overlay -->
+    <header class="app-header">
+      <div class="title-wrap">
+        <h1 class="holiday-title">Merry Christmas</h1>
+        <p class="subtitle">
+          <span class="music-icon">🎵</span>
+          <span class="song-title">Sia — Snowman</span>
+          <span class="badge">ASCII Animation</span>
+        </p>
+      </div>
+
+      <!-- Action buttons top right -->
+      <div class="header-actions">
+        <button id="btn-toggle-view" class="icon-btn" title="Toggle between Canvas Engine and Python Video">
+          <span id="view-icon">🎬</span>
+          <span id="view-label">Watch HD Video</span>
+        </button>
+        <button id="btn-bloom" class="icon-btn active" title="Toggle CRT Bloom Glow">
+          <span>✨</span>
+          <span>Bloom</span>
+        </button>
+        <button id="btn-fullscreen" class="icon-btn" title="Fullscreen">
+          <span>⛶</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Visual Canvas Display -->
+    <main class="viewport" id="viewport">
+      <!-- CRT scanline overlay -->
+      <div class="crt-overlay" id="crt-overlay"></div>
+
+      <!-- Live Canvas Animation Engine -->
+      <canvas id="tree-canvas" class="display-element active"></canvas>
+
+      <!-- Python-Rendered HD MP4 Video Player -->
+      <div id="video-container" class="display-element">
+        <video id="hd-video" src="christmas_tree.mp4" playsinline loop></video>
+        <div class="video-watermark">Python Rendered (PIL + FFmpeg)</div>
+      </div>
+
+      <!-- Initial Audio Play Overlay (Helps browser autoplay policy) -->
+      <div id="audio-prompt" class="audio-prompt">
+        <button id="btn-start" class="start-btn">
+          <span class="play-icon">▶</span>
+          <span class="start-text">
+            <strong>Experience with Music</strong>
+            <small>Sia — Snowman</small>
+          </span>
+        </button>
+      </div>
+
+      <!-- Growth Progress Indicator -->
+      <div id="progress-bar-wrap" class="progress-wrap">
+        <div id="progress-bar" class="progress-bar"></div>
+        <span id="progress-label" class="progress-label">Ascending...</span>
+      </div>
+    </main>
+
+    <!-- Bottom Controls Deck -->
+    <footer class="controls-bar">
+      <div class="controls-group">
+        <button id="btn-play-pause" class="control-btn primary" title="Play / Pause">
+          <span id="play-pause-icon">⏸</span>
+          <span id="play-pause-text">Pause</span>
+        </button>
+        <button id="btn-restart" class="control-btn" title="Restart Bottom-to-Top Animation">
+          <span>↺</span>
+          <span>Restart</span>
+        </button>
+      </div>
+
+      <div class="controls-group sound-group">
+        <button id="btn-mute" class="control-btn" title="Mute / Unmute">
+          <span id="mute-icon">🔊</span>
+        </button>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" class="vol-slider" title="Volume">
+      </div>
+
+      <div class="controls-group meta-group">
+        <span class="info-tag">🌲 Bottom-to-Top Reveal (16s)</span>
+        <span class="info-tag">❄ White Pixel Snowfall</span>
+        <span class="info-tag">🔔 Bells & Gifts</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Audio unlock modal / pill if browser muted -->
+  <div id="unmute-toast" class="unmute-toast hidden">
+    <span>🔇 Music is muted by browser</span>
+    <button id="toast-unmute-btn">Click to Unmute 🔊</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
