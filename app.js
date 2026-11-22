@@ -8,21 +8,24 @@
  * - Wrapped gifts at base (Red box left, Royal Blue box right) and snow mound
  * - Wide perspective ground grid (...., ::::, ----, ++++, ====)
  * - White pixelated snowfall physics & CRT bloom overlay
- * - Organic bottom-to-top assembly animation running for >15 seconds (16.0s build + celebration)
- * - Synchronized to Sia - Snowman starting directly at "Don't cry snowman"
+ * - Organic bottom-to-top assembly animation completed exactly at 15th second (15.0s build + celebration)
+ * - Synchronized to Sia - Snowman with seamless audio handling
  */
 
 (function () {
   'use strict';
 
   // Constants
-  const TOTAL_BUILD_DURATION = 15.0; // Tree is completed exactly at 15.0s
+  const TOTAL_BUILD_DURATION = 15.0; // Completed exactly at 15.0s
+  const NATIVE_W = 1072;
+  const NATIVE_H = 1180;
+  const CX = NATIVE_W / 2;
 
-  // DOM Elements
+  // DOM Elements (Safely retrieved)
   const treeCanvas = document.getElementById('tree-canvas');
-  const treeCtx = treeCanvas.getContext('2d');
+  const treeCtx = treeCanvas ? treeCanvas.getContext('2d') : null;
   const skyCanvas = document.getElementById('sky-canvas');
-  const skyCtx = skyCanvas.getContext('2d');
+  const skyCtx = skyCanvas ? skyCanvas.getContext('2d') : null;
 
   const bgAudio = document.getElementById('bg-audio');
   const btnPlayPause = document.getElementById('btn-play-pause');
@@ -43,17 +46,26 @@
   const progressBarWrap = document.getElementById('progress-bar-wrap');
   const progressBar = document.getElementById('progress-bar');
   const progressLabel = document.getElementById('progress-label');
+  const audioPill = document.getElementById('audio-pill');
 
-  // Load the authentic reference image and sky background
-  const refImg = new Image();
-  refImg.src = 'reference.jpeg';
+  // Load Reference Image & Background Image with Robust Cache Handling
   let refLoaded = false;
+  const refImg = new Image();
   refImg.onload = () => { refLoaded = true; };
+  refImg.onerror = () => { console.warn('Could not load reference.jpeg'); };
+  refImg.src = 'reference.jpeg';
+  if (refImg.complete && refImg.naturalWidth > 0) {
+    refLoaded = true;
+  }
 
-  const skyImg = new Image();
-  skyImg.src = 'sky_bg.jpg';
   let skyLoaded = false;
+  const skyImg = new Image();
   skyImg.onload = () => { skyLoaded = true; };
+  skyImg.onerror = () => { console.warn('Could not load sky_bg.jpg'); };
+  skyImg.src = 'sky_bg.jpg';
+  if (skyImg.complete && skyImg.naturalWidth > 0) {
+    skyLoaded = true;
+  }
 
   // Snowflake Particle Physics System
   const SNOW_CHARS = ['.', '·', '*', '+', 'o', '❄'];
@@ -116,18 +128,16 @@
   let lastFrameTime = performance.now();
   let viewMode = 'canvas';
 
-  // Canvas Sizing
-  const NATIVE_W = 1072;
-  const NATIVE_H = 1180;
-  const CX = NATIVE_W / 2;
-
+  // Dynamic Responsive Canvas Resizing
   function resizeCanvases() {
+    if (!treeCanvas || !treeCtx || !skyCanvas || !skyCtx) return;
+
     const dpr = window.devicePixelRatio || 1;
     const viewport = document.getElementById('viewport');
-    const vw = viewport.clientWidth;
-    const vh = viewport.clientHeight;
+    const vw = (viewport && viewport.clientWidth) || window.innerWidth;
+    const vh = (viewport && viewport.clientHeight) || (window.innerHeight - 130);
 
-    const scale = Math.min((vw * 0.95) / NATIVE_W, (vh * 0.88) / NATIVE_H);
+    const scale = Math.max(0.15, Math.min((vw * 0.96) / NATIVE_W, (vh * 0.88) / NATIVE_H));
     const canvasW = Math.round(NATIVE_W * scale);
     const canvasH = Math.round(NATIVE_H * scale);
 
@@ -135,20 +145,35 @@
     treeCanvas.height = canvasH * dpr;
     treeCanvas.style.width = `${canvasW}px`;
     treeCanvas.style.height = `${canvasH}px`;
-    treeCtx.scale(dpr * scale, dpr * scale);
+    treeCtx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
 
     skyCanvas.width = window.innerWidth * dpr;
     skyCanvas.height = window.innerHeight * dpr;
     skyCanvas.style.width = `${window.innerWidth}px`;
     skyCanvas.style.height = `${window.innerHeight}px`;
-    skyCtx.scale(dpr, dpr);
+    skyCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
   window.addEventListener('resize', resizeCanvases);
+  window.addEventListener('load', resizeCanvases);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', resizeCanvases);
+  }
   resizeCanvases();
 
   // Main Render Loop
   function render(now) {
+    if (!treeCtx || !skyCtx) return;
+
+    // Check if cached image became available
+    if (!refLoaded && refImg.complete && refImg.naturalWidth > 0) refLoaded = true;
+    if (!skyLoaded && skyImg.complete && skyImg.naturalWidth > 0) skyLoaded = true;
+
+    // Check if canvas was initialized before layout
+    if (treeCanvas.width === 0 || treeCanvas.height === 0) {
+      resizeCanvases();
+    }
+
     const dt = Math.min(0.1, (now - lastFrameTime) / 1000);
     lastFrameTime = now;
 
@@ -168,21 +193,28 @@
 
     // Update Progress Bar & Synced Lyrics
     const progress = Math.min(1.0, animTime / TOTAL_BUILD_DURATION);
-    progressBar.style.setProperty('--progress', `${progress * 100}%`);
-    if (progress < 1.0) {
-      progressBarWrap.classList.remove('done');
-      if (animTime < 1.5) progressLabel.textContent = "Don't cry, snowman...";
-      else if (animTime < 3.5) progressLabel.textContent = "Not in front of me...";
-      else if (animTime < 5.5) progressLabel.textContent = "Gifts & Ground Assembling... 🎁";
-      else if (animTime < 9.5) progressLabel.textContent = "Tree Ascending... 🌲";
-      else if (animTime < 13.5) progressLabel.textContent = "Garlands Blooming... ✨";
-      else progressLabel.textContent = "⭐ Pinnacle Crown Star Igniting! ⭐";
-    } else {
-      progressLabel.textContent = 'Merry Christmas & Happy Holidays! 🎄';
-      if (animTime > 17.0) progressBarWrap.classList.add('done');
+    if (progressBar) {
+      progressBar.style.setProperty('--progress', `${progress * 100}%`);
     }
 
-    // Draw Sky Background
+    if (progressLabel) {
+      if (progress < 1.0) {
+        if (progressBarWrap) progressBarWrap.classList.remove('done');
+        if (animTime < 1.5) progressLabel.textContent = "Don't cry, snowman...";
+        else if (animTime < 3.5) progressLabel.textContent = "Not in front of me...";
+        else if (animTime < 5.5) progressLabel.textContent = "Gifts & Ground Assembling... 🎁";
+        else if (animTime < 9.5) progressLabel.textContent = "Tree Ascending... 🌲";
+        else if (animTime < 13.5) progressLabel.textContent = "Garlands Blooming... ✨";
+        else progressLabel.textContent = "⭐ Pinnacle Crown Star Igniting! ⭐";
+      } else {
+        progressLabel.textContent = 'Merry Christmas & Happy Holidays! 🎄';
+        if (animTime > 17.0 && progressBarWrap) {
+          progressBarWrap.classList.add('done');
+        }
+      }
+    }
+
+    // Draw Background
     drawSkyBackground();
 
     // Draw Tree Animation
@@ -209,7 +241,7 @@
   function drawTreeFrame(t) {
     treeCtx.clearRect(0, 0, NATIVE_W, NATIVE_H);
 
-    // 1. Draw Starry Night Sky Base
+    // 1. Starry Night Sky Base
     if (skyLoaded) {
       treeCtx.drawImage(skyImg, 0, 0, NATIVE_W, NATIVE_H);
     } else {
@@ -217,85 +249,91 @@
       treeCtx.fillRect(0, 0, NATIVE_W, NATIVE_H);
     }
 
-    if (!refLoaded) return;
-
-    // Organic timeline:
-    // 0.0s - 2.0s: Cosmic sky with snowfall
-    // 2.0s - 4.5s: Ground perspective lines reveal from horizon down
-    // 4.5s - 6.5s: Wrapped gifts & snow bank assemble at base
-    // 6.5s - 13.8s: Tree ascends organically with natural branch-profile crest
-    // 13.8s - 15.5s: Crown star ignites at apex, radiating beams into space
-    // 15.5s+: Full 100% faithful artwork active
-
     let treeProg = 0.0;
     let currTreeY = 1040;
 
-    if (t < 15.0) {
-      treeCtx.save();
-      treeCtx.beginPath();
+    // 2. Draw Artwork if loaded
+    if (refLoaded) {
+      if (t >= TOTAL_BUILD_DURATION) {
+        // Complete authentic artwork fully active
+        treeCtx.drawImage(refImg, 0, 0, NATIVE_W, NATIVE_H);
+      } else {
+        // Organic multi-pass assembly (clean, disjoint clipping passes)
 
-      // A. Ground Perspective Grid (1.5s to 3.5s)
-      if (t >= 1.5) {
-        const gProg = Math.min(1.0, (t - 1.5) / 2.0);
-        const currGY = 810 + gProg * (NATIVE_H - 810);
-        treeCtx.rect(0, 810, NATIVE_W, currGY - 810);
-      }
-
-      // B. Wrapped Gifts & Snow Bank (3.5s to 5.5s)
-      if (t >= 3.5) {
-        // Red gift box (left)
-        treeCtx.rect(190, 960, 210, 180);
-        // Blue gift box (right)
-        treeCtx.rect(690, 960, 220, 180);
-        // Snow drift (center base)
-        treeCtx.rect(400, 1020, 290, 120);
-      }
-
-      // C. Tree Foliage & Garlands (5.5s to 13.5s)
-      if (t >= 5.5) {
-        treeProg = Math.min(1.0, (t - 5.5) / 8.0);
-        currTreeY = 1040 - treeProg * (1040 - 200);
-
-        const halfWAtBase = 385;
-        const halfWAtTop = 40 + (currTreeY - 200) / 840 * 345;
-
-        // Trace organic branch contour
-        treeCtx.moveTo(CX - halfWAtBase, 1040);
-        treeCtx.lineTo(CX + halfWAtBase, 1040);
-        treeCtx.lineTo(CX + halfWAtTop, currTreeY);
-
-        // Branch-wave crest at current growth height
-        const steps = 30;
-        for (let i = 0; i <= steps; i++) {
-          const frac = i / steps;
-          const x = (CX + halfWAtTop) - frac * (halfWAtTop * 2);
-          const wobble = 12 * Math.sin(x * 0.05) * Math.cos(currTreeY * 0.03);
-          treeCtx.lineTo(x, currTreeY + wobble);
+        // Pass A: Ground Perspective Grid (1.5s to 3.5s)
+        if (t >= 1.5) {
+          const gProg = Math.min(1.0, (t - 1.5) / 2.0);
+          const currGY = 810 + gProg * (NATIVE_H - 810);
+          treeCtx.save();
+          treeCtx.beginPath();
+          treeCtx.rect(0, 810, NATIVE_W, currGY - 810);
+          treeCtx.clip();
+          treeCtx.drawImage(refImg, 0, 0, NATIVE_W, NATIVE_H);
+          treeCtx.restore();
         }
-        treeCtx.lineTo(CX - halfWAtBase, 1040);
-        treeCtx.closePath();
-      }
 
-      // D. Apex Crown Star & Radiant Beams (13.5s to 15.0s - Completed exactly at 15.0s)
-      if (t >= 13.5) {
-        const starProg = Math.min(1.0, (t - 13.5) / 1.5);
-        // Crown star body
-        treeCtx.rect(CX - 85, 120, 170, 85);
-        // Radiating celestial beams
-        if (starProg > 0.35) {
-          const bProg = (starProg - 0.35) / 0.65;
-          const beamTop = Math.round(200 - bProg * 170);
-          const beamHalfW = Math.round(bProg * 135);
-          treeCtx.rect(CX - beamHalfW, beamTop, beamHalfW * 2, 200 - beamTop);
+        // Pass B: Wrapped Gifts & Snow Bank (3.5s to 5.5s)
+        if (t >= 3.5) {
+          treeCtx.save();
+          treeCtx.beginPath();
+          // Red gift box left
+          treeCtx.rect(170, 950, 230, 200);
+          // Blue gift box right
+          treeCtx.rect(680, 950, 240, 200);
+          // Center snow mound
+          treeCtx.rect(390, 1010, 300, 140);
+          treeCtx.clip();
+          treeCtx.drawImage(refImg, 0, 0, NATIVE_W, NATIVE_H);
+          treeCtx.restore();
+        }
+
+        // Pass C: Tree Foliage & Spiraling Garlands (5.5s to 13.5s)
+        if (t >= 5.5) {
+          treeProg = Math.min(1.0, (t - 5.5) / 8.0);
+          currTreeY = 1040 - treeProg * (1040 - 200);
+
+          const halfWAtTop = 40 + (currTreeY - 200) / 840 * 345;
+
+          treeCtx.save();
+          treeCtx.beginPath();
+          treeCtx.moveTo(CX - 385, 1045);
+          treeCtx.lineTo(CX + 385, 1045);
+          treeCtx.lineTo(CX + halfWAtTop, currTreeY);
+
+          // Organic branch-wave crest along current growth height
+          const steps = 30;
+          for (let i = 0; i <= steps; i++) {
+            const frac = i / steps;
+            const x = (CX + halfWAtTop) - frac * (halfWAtTop * 2);
+            const wobble = 10 * Math.sin(x * 0.05) * Math.cos(currTreeY * 0.03);
+            treeCtx.lineTo(x, currTreeY + wobble);
+          }
+          treeCtx.lineTo(CX - 385, 1045);
+          treeCtx.closePath();
+          treeCtx.clip();
+          treeCtx.drawImage(refImg, 0, 0, NATIVE_W, NATIVE_H);
+          treeCtx.restore();
+        }
+
+        // Pass D: Apex Crown Star & Radiant Beams (13.5s to 15.0s)
+        if (t >= 13.5) {
+          const starProg = Math.min(1.0, (t - 13.5) / 1.5);
+          treeCtx.save();
+          treeCtx.beginPath();
+          // Star body
+          treeCtx.rect(CX - 85, 115, 170, 90);
+          // Radiant celestial beams shooting outward
+          if (starProg > 0.3) {
+            const bProg = (starProg - 0.3) / 0.7;
+            const beamTop = Math.round(200 - bProg * 180);
+            const beamHalfW = Math.round(bProg * 140);
+            treeCtx.rect(CX - beamHalfW, beamTop, beamHalfW * 2, 200 - beamTop);
+          }
+          treeCtx.clip();
+          treeCtx.drawImage(refImg, 0, 0, NATIVE_W, NATIVE_H);
+          treeCtx.restore();
         }
       }
-
-      treeCtx.clip();
-      treeCtx.drawImage(refImg, 0, 0, NATIVE_W, NATIVE_H);
-      treeCtx.restore();
-    } else {
-      // Full 100% authentic reference artwork rendered directly
-      treeCtx.drawImage(refImg, 0, 0, NATIVE_W, NATIVE_H);
     }
 
     // 3. Dynamic Sparkle Embers Riding the Leading Growth Edge
@@ -328,7 +366,7 @@
       treeCtx.restore();
     }
 
-    // 5. White Pixelated Snowfall
+    // 5. White Pixelated Snowfall (Always active and falling!)
     treeCtx.shadowColor = '#ffffff';
     treeCtx.shadowBlur = 4;
     snowSystem.flakes.forEach(f => {
@@ -354,152 +392,220 @@
   }
 
   // Interactive Click on Canvas
-  treeCanvas.addEventListener('pointerdown', (e) => {
-    const rect = treeCanvas.getBoundingClientRect();
-    const scaleX = NATIVE_W / rect.width;
-    const scaleY = NATIVE_H / rect.height;
-    const clickX = (e.clientX - rect.left) * scaleX;
-    const clickY = (e.clientY - rect.top) * scaleY;
-    addSparkles(clickX, clickY);
-  });
+  if (treeCanvas) {
+    treeCanvas.addEventListener('pointerdown', (e) => {
+      const rect = treeCanvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const scaleX = NATIVE_W / rect.width;
+      const scaleY = NATIVE_H / rect.height;
+      const clickX = (e.clientX - rect.left) * scaleX;
+      const clickY = (e.clientY - rect.top) * scaleY;
+      addSparkles(clickX, clickY);
+    });
+  }
 
-  // Audio Handlers - Autoplays immediately on page load / link click
-  const AUDIO_START_TIME = 0.0;
+  // Audio Control & Safe Autoplay Handling
+  function safeSeekAudio(time) {
+    if (!bgAudio) return;
+    try {
+      if (bgAudio.readyState >= 1) {
+        bgAudio.currentTime = time;
+      } else {
+        bgAudio.addEventListener('loadedmetadata', () => {
+          try { bgAudio.currentTime = time; } catch (e) {}
+        }, { once: true });
+      }
+    } catch (e) {
+      console.warn('Audio seek exception:', e);
+    }
+  }
 
   function startPlayback() {
-    bgAudio.volume = parseFloat(volSlider.value) || 0.8;
-    bgAudio.currentTime = AUDIO_START_TIME;
+    if (!bgAudio) return;
+
+    bgAudio.volume = parseFloat(volSlider ? volSlider.value : 0.8) || 0.8;
+    safeSeekAudio(0.0);
+
     const playPromise = bgAudio.play();
     if (playPromise !== undefined) {
       playPromise.then(() => {
         isMuted = false;
         updateAudioUI();
+        if (audioPill) audioPill.classList.add('hidden');
       }).catch(err => {
-        // If browser policies block unmuted autoplay prior to user interaction,
-        // seamlessly unlock on the first click, tap, scroll, or keypress anywhere
+        // Autoplay policy prevented unmuted autoplay
         console.log('Autoplay deferred, waiting for first interaction:', err);
-        const autoUnlock = () => {
-          bgAudio.currentTime = AUDIO_START_TIME;
-          bgAudio.play().then(() => {
-            isMuted = false;
-            updateAudioUI();
-          }).catch(() => {});
-          ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(ev => {
-            window.removeEventListener(ev, autoUnlock, true);
-          });
-        };
-        ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(ev => {
-          window.addEventListener(ev, autoUnlock, { once: true, capture: true });
-        });
+        if (audioPill) audioPill.classList.remove('hidden');
+        updateAudioUI();
       });
     }
   }
 
-  // Ensure loop restarts from the beginning
-  bgAudio.addEventListener('ended', () => {
-    bgAudio.currentTime = AUDIO_START_TIME;
-    bgAudio.play().catch(() => {});
+  // Seamless unlock on first click, tap, scroll, or keypress anywhere
+  function unlockAudio() {
+    if (!bgAudio) return;
+    if (bgAudio.paused) {
+      bgAudio.volume = parseFloat(volSlider ? volSlider.value : 0.8) || 0.8;
+      bgAudio.play().then(() => {
+        isMuted = false;
+        updateAudioUI();
+        if (audioPill) audioPill.classList.add('hidden');
+      }).catch(() => {});
+    }
+  }
+
+  ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(ev => {
+    window.addEventListener(ev, unlockAudio, { passive: true });
   });
+
+  // Ensure loop restarts cleanly from 0:00
+  if (bgAudio) {
+    bgAudio.addEventListener('ended', () => {
+      safeSeekAudio(0.0);
+      bgAudio.play().catch(() => {});
+    });
+  }
 
   function updateAudioUI() {
-    if (bgAudio.paused) {
-      playPauseIcon.textContent = '▶';
-      playPauseText.textContent = 'Play';
-    } else {
-      playPauseIcon.textContent = '⏸';
-      playPauseText.textContent = 'Pause';
+    if (!bgAudio) return;
+
+    if (playPauseIcon && playPauseText) {
+      if (bgAudio.paused) {
+        playPauseIcon.textContent = '▶';
+        playPauseText.textContent = 'Play';
+      } else {
+        playPauseIcon.textContent = '⏸';
+        playPauseText.textContent = 'Pause';
+      }
     }
 
-    if (bgAudio.muted || bgAudio.volume === 0) {
-      muteIcon.textContent = '🔇';
-    } else if (bgAudio.volume < 0.5) {
-      muteIcon.textContent = '🔉';
-    } else {
-      muteIcon.textContent = '🔊';
+    if (muteIcon) {
+      if (bgAudio.muted || bgAudio.volume === 0) {
+        muteIcon.textContent = '🔇';
+      } else if (bgAudio.volume < 0.5) {
+        muteIcon.textContent = '🔉';
+      } else {
+        muteIcon.textContent = '🔊';
+      }
     }
   }
 
-  // Autoplay immediately on script execution, DOM ready, and window load
+  // Start playback attempt on load
   startPlayback();
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startPlayback);
-  }
   window.addEventListener('load', startPlayback);
 
-  btnPlayPause.addEventListener('click', () => {
-    if (isPlaying) {
-      isPlaying = false;
-      bgAudio.pause();
-      if (viewMode === 'video') hdVideo.pause();
-    } else {
+  // Pill click starts audio immediately
+  if (audioPill) {
+    audioPill.addEventListener('click', (e) => {
+      e.stopPropagation();
+      unlockAudio();
+    });
+  }
+
+  // Play / Pause Button
+  if (btnPlayPause) {
+    btnPlayPause.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (isPlaying && bgAudio && !bgAudio.paused) {
+        isPlaying = false;
+        bgAudio.pause();
+        if (viewMode === 'video' && hdVideo) hdVideo.pause();
+      } else {
+        isPlaying = true;
+        lastFrameTime = performance.now();
+        if (bgAudio) bgAudio.play().catch(() => {});
+        if (viewMode === 'video' && hdVideo) hdVideo.play().catch(() => {});
+        if (audioPill) audioPill.classList.add('hidden');
+      }
+      updateAudioUI();
+    });
+  }
+
+  // Restart Button
+  if (btnRestart) {
+    btnRestart.addEventListener('click', (e) => {
+      e.stopPropagation();
+      animTime = 0.0;
+      safeSeekAudio(0.0);
+      if (viewMode === 'video' && hdVideo) hdVideo.currentTime = 0;
       isPlaying = true;
       lastFrameTime = performance.now();
-      bgAudio.play().catch(() => {});
-      if (viewMode === 'video') hdVideo.play().catch(() => {});
-    }
-    updateAudioUI();
-  });
+      if (bgAudio) bgAudio.play().catch(() => {});
+      if (viewMode === 'video' && hdVideo) hdVideo.play().catch(() => {});
+      if (audioPill) audioPill.classList.add('hidden');
+      if (progressBarWrap) progressBarWrap.classList.remove('done');
+      updateAudioUI();
+    });
+  }
 
-  btnRestart.addEventListener('click', () => {
-    animTime = 0.0;
-    bgAudio.currentTime = AUDIO_START_TIME;
-    if (viewMode === 'video') hdVideo.currentTime = 0;
-    if (!isPlaying) {
-      isPlaying = true;
-      lastFrameTime = performance.now();
-      bgAudio.play().catch(() => {});
-    }
-    progressBarWrap.classList.remove('done');
-    updateAudioUI();
-  });
+  // Mute Button
+  if (btnMute) {
+    btnMute.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!bgAudio) return;
+      bgAudio.muted = !bgAudio.muted;
+      if (viewMode === 'video' && hdVideo) hdVideo.muted = bgAudio.muted;
+      updateAudioUI();
+    });
+  }
 
-  btnMute.addEventListener('click', () => {
-    bgAudio.muted = !bgAudio.muted;
-    if (viewMode === 'video') hdVideo.muted = bgAudio.muted;
-    updateAudioUI();
-  });
+  // Volume Slider
+  if (volSlider) {
+    volSlider.addEventListener('input', (e) => {
+      if (!bgAudio) return;
+      bgAudio.volume = parseFloat(e.target.value);
+      if (bgAudio.volume > 0) bgAudio.muted = false;
+      if (viewMode === 'video' && hdVideo) hdVideo.volume = bgAudio.volume;
+      updateAudioUI();
+    });
+  }
 
-  volSlider.addEventListener('input', (e) => {
-    bgAudio.volume = parseFloat(e.target.value);
-    if (bgAudio.volume > 0) bgAudio.muted = false;
-    if (viewMode === 'video') hdVideo.volume = bgAudio.volume;
-    updateAudioUI();
-  });
-
+  // CRT Bloom Toggle
   let bloomEnabled = true;
-  btnBloom.addEventListener('click', () => {
-    bloomEnabled = !bloomEnabled;
-    btnBloom.classList.toggle('active', bloomEnabled);
-    treeCanvas.classList.toggle('bloom', bloomEnabled);
-    crtOverlay.classList.toggle('disabled', !bloomEnabled);
-  });
+  if (btnBloom) {
+    btnBloom.addEventListener('click', () => {
+      bloomEnabled = !bloomEnabled;
+      btnBloom.classList.toggle('active', bloomEnabled);
+      if (treeCanvas) treeCanvas.classList.toggle('bloom', bloomEnabled);
+      if (crtOverlay) crtOverlay.classList.toggle('disabled', !bloomEnabled);
+    });
+  }
 
-  btnFullscreen.addEventListener('click', () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-      document.exitFullscreen().catch(() => {});
-    }
-  });
+  // Fullscreen Toggle
+  if (btnFullscreen) {
+    btnFullscreen.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+  }
 
-  btnToggleView.addEventListener('click', () => {
-    if (viewMode === 'canvas') {
-      viewMode = 'video';
-      treeCanvas.classList.remove('active');
-      videoContainer.classList.add('active');
-      viewIcon.textContent = '🌲';
-      viewLabel.textContent = 'Interactive Canvas';
-      hdVideo.currentTime = animTime % 18.0;
-      if (isPlaying) hdVideo.play().catch(() => {});
-    } else {
-      viewMode = 'canvas';
-      videoContainer.classList.remove('active');
-      treeCanvas.classList.add('active');
-      viewIcon.textContent = '🎬';
-      viewLabel.textContent = 'Watch HD Video';
-      hdVideo.pause();
-    }
-  });
+  // Toggle View: Interactive Canvas vs Python Video
+  if (btnToggleView) {
+    btnToggleView.addEventListener('click', () => {
+      if (viewMode === 'canvas') {
+        viewMode = 'video';
+        if (treeCanvas) treeCanvas.classList.remove('active');
+        if (videoContainer) videoContainer.classList.add('active');
+        if (viewIcon) viewIcon.textContent = '🌲';
+        if (viewLabel) viewLabel.textContent = 'Interactive Canvas';
+        if (hdVideo) {
+          hdVideo.currentTime = animTime % 18.0;
+          if (isPlaying) hdVideo.play().catch(() => {});
+        }
+      } else {
+        viewMode = 'canvas';
+        if (videoContainer) videoContainer.classList.remove('active');
+        if (treeCanvas) treeCanvas.classList.add('active');
+        if (viewIcon) viewIcon.textContent = '🎬';
+        if (viewLabel) viewLabel.textContent = 'Watch HD Video';
+        if (hdVideo) hdVideo.pause();
+      }
+    });
+  }
 
+  // Start Animation Loop
   requestAnimationFrame(render);
 })();

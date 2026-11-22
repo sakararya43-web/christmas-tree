@@ -7,11 +7,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Mountains+of+Christmas:wght@700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261122c">
 </head>
 <body>
-  <!-- Ambient Audio: Sia - Snowman (Autoplays immediately on load) -->
-  <audio id="bg-audio" src="snowman.mp3" preload="auto" loop autoplay></audio>
+  <!-- Ambient Audio: Sia - Snowman -->
+  <audio id="bg-audio" src="snowman.mp3" preload="auto" loop></audio>
 
   <!-- Background Starry Glow Canvas -->
   <canvas id="sky-canvas"></canvas>
@@ -59,12 +59,17 @@
         <div class="video-watermark">Python Rendered (PIL + FFmpeg)</div>
       </div>
 
-
+      <!-- Unmute / Music Start Pill (displayed if browser blocks unmuted autoplay) -->
+      <div id="audio-pill" class="audio-pill hidden" title="Click anywhere to listen with music">
+        <span class="audio-pill-icon">🎵</span>
+        <span class="audio-pill-text">Click anywhere to play with music (Sia - Snowman)</span>
+        <span class="audio-pill-speaker">🔊</span>
+      </div>
 
       <!-- Growth Progress Indicator -->
       <div id="progress-bar-wrap" class="progress-wrap">
         <div id="progress-bar" class="progress-bar"></div>
-        <span id="progress-label" class="progress-label">Ascending...</span>
+        <span id="progress-label" class="progress-label">Don't cry, snowman...</span>
       </div>
     </main>
 
@@ -72,8 +77,8 @@
     <footer class="controls-bar">
       <div class="controls-group">
         <button id="btn-play-pause" class="control-btn primary" title="Play / Pause">
-          <span id="play-pause-icon">⏸</span>
-          <span id="play-pause-text">Pause</span>
+          <span id="play-pause-icon">▶</span>
+          <span id="play-pause-text">Play</span>
         </button>
         <button id="btn-restart" class="control-btn" title="Restart Bottom-to-Top Animation">
           <span>↺</span>
@@ -96,8 +101,6 @@
     </footer>
   </div>
 
-
-
-  <script src="app.js"></script>
+  <script src="app.js?v=20261122c"></script>
 </body>
 </html>

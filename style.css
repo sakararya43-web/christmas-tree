@@ -219,6 +219,53 @@ html, body {
 
 
 
+/* Audio Pill Notice */
+.audio-pill {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(13, 19, 36, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(250, 204, 21, 0.6);
+  box-shadow: 0 0 25px rgba(250, 204, 21, 0.35);
+  padding: 10px 22px;
+  border-radius: 9999px;
+  color: #fef08a;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: pill-pulse 2s infinite ease-in-out;
+  pointer-events: auto;
+}
+
+.audio-pill:hover {
+  transform: translateX(-50%) scale(1.03);
+  background: rgba(22, 33, 62, 0.95);
+  border-color: #fde047;
+}
+
+.audio-pill.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -12px);
+}
+
+@keyframes pill-pulse {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(250, 204, 21, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 32px rgba(250, 204, 21, 0.65);
+  }
+}
+
 /* Progress Wrap */
 .progress-wrap {
   position: absolute;
