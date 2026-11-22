@@ -25,8 +25,6 @@
   const skyCtx = skyCanvas.getContext('2d');
 
   const bgAudio = document.getElementById('bg-audio');
-  const audioPrompt = document.getElementById('audio-prompt');
-  const btnStart = document.getElementById('btn-start');
   const btnPlayPause = document.getElementById('btn-play-pause');
   const playPauseIcon = document.getElementById('play-pause-icon');
   const playPauseText = document.getElementById('play-pause-text');
@@ -45,8 +43,6 @@
   const progressBarWrap = document.getElementById('progress-bar-wrap');
   const progressBar = document.getElementById('progress-bar');
   const progressLabel = document.getElementById('progress-label');
-  const unmuteToast = document.getElementById('unmute-toast');
-  const toastUnmuteBtn = document.getElementById('toast-unmute-btn');
 
   // Load the authentic reference image and sky background
   const refImg = new Image();
@@ -367,23 +363,39 @@
     addSparkles(clickX, clickY);
   });
 
-  // Audio Handlers (Starts immediately from 0:06 of Sia - Snowman)
+  // Audio Handlers - Autoplays immediately on page load / link click
   const AUDIO_START_TIME = 0.0;
 
   function startPlayback() {
-    audioPrompt.classList.add('hidden');
-    bgAudio.volume = parseFloat(volSlider.value);
+    bgAudio.volume = parseFloat(volSlider.value) || 0.8;
     bgAudio.currentTime = AUDIO_START_TIME;
-    bgAudio.play().then(() => {
-      isMuted = false;
-      updateAudioUI();
-    }).catch(err => {
-      console.log('Audio autoplay prevented:', err);
-      unmuteToast.classList.remove('hidden');
-    });
+    const playPromise = bgAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        isMuted = false;
+        updateAudioUI();
+      }).catch(err => {
+        // If browser policies block unmuted autoplay prior to user interaction,
+        // seamlessly unlock on the first click, tap, scroll, or keypress anywhere
+        console.log('Autoplay deferred, waiting for first interaction:', err);
+        const autoUnlock = () => {
+          bgAudio.currentTime = AUDIO_START_TIME;
+          bgAudio.play().then(() => {
+            isMuted = false;
+            updateAudioUI();
+          }).catch(() => {});
+          ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(ev => {
+            window.removeEventListener(ev, autoUnlock, true);
+          });
+        };
+        ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(ev => {
+          window.addEventListener(ev, autoUnlock, { once: true, capture: true });
+        });
+      });
+    }
   }
 
-  // Ensure loop restarts from 0:06
+  // Ensure loop restarts from the beginning
   bgAudio.addEventListener('ended', () => {
     bgAudio.currentTime = AUDIO_START_TIME;
     bgAudio.play().catch(() => {});
@@ -407,15 +419,12 @@
     }
   }
 
-  btnStart.addEventListener('click', startPlayback);
-
-  toastUnmuteBtn.addEventListener('click', () => {
-    bgAudio.muted = false;
-    bgAudio.currentTime = AUDIO_START_TIME;
-    bgAudio.play();
-    unmuteToast.classList.add('hidden');
-    updateAudioUI();
-  });
+  // Autoplay immediately on script execution, DOM ready, and window load
+  startPlayback();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startPlayback);
+  }
+  window.addEventListener('load', startPlayback);
 
   btnPlayPause.addEventListener('click', () => {
     if (isPlaying) {

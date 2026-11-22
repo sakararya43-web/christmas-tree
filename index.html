@@ -10,8 +10,8 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Ambient Audio: Sia - Snowman -->
-  <audio id="bg-audio" src="snowman.mp3" preload="auto" loop></audio>
+  <!-- Ambient Audio: Sia - Snowman (Autoplays immediately on load) -->
+  <audio id="bg-audio" src="snowman.mp3" preload="auto" loop autoplay></audio>
 
   <!-- Background Starry Glow Canvas -->
   <canvas id="sky-canvas"></canvas>
@@ -59,16 +59,7 @@
         <div class="video-watermark">Python Rendered (PIL + FFmpeg)</div>
       </div>
 
-      <!-- Initial Audio Play Overlay (Helps browser autoplay policy) -->
-      <div id="audio-prompt" class="audio-prompt">
-        <button id="btn-start" class="start-btn">
-          <span class="play-icon">▶</span>
-          <span class="start-text">
-            <strong>Experience with Music</strong>
-            <small>Sia — Snowman</small>
-          </span>
-        </button>
-      </div>
+
 
       <!-- Growth Progress Indicator -->
       <div id="progress-bar-wrap" class="progress-wrap">
@@ -105,11 +96,7 @@
     </footer>
   </div>
 
-  <!-- Audio unlock modal / pill if browser muted -->
-  <div id="unmute-toast" class="unmute-toast hidden">
-    <span>🔇 Music is muted by browser</span>
-    <button id="toast-unmute-btn">Click to Unmute 🔊</button>
-  </div>
+
 
   <script src="app.js"></script>
 </body>

@@ -217,67 +217,7 @@ html, body {
   color: #94a3b8;
 }
 
-/* Start Audio Prompt Overlay */
-.audio-prompt {
-  position: absolute;
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(6, 9, 19, 0.65);
-  backdrop-filter: blur(10px);
-  padding: 24px 32px;
-  border-radius: 16px;
-  border: 1px solid rgba(250, 204, 21, 0.4);
-  box-shadow: 0 0 35px rgba(250, 204, 21, 0.3);
-  animation: pulse-glow 2.4s infinite ease-in-out;
-}
 
-.audio-prompt.hidden {
-  display: none;
-}
-
-.start-btn {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 14px 28px;
-  cursor: pointer;
-  font-size: 1.05rem;
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.start-btn:hover {
-  transform: scale(1.04);
-  box-shadow: 0 8px 26px rgba(239, 68, 68, 0.65);
-}
-
-.play-icon {
-  font-size: 1.8rem;
-  color: #fef08a;
-}
-
-.start-text {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-.start-text strong {
-  font-size: 1.15rem;
-  letter-spacing: 0.5px;
-}
-
-.start-text small {
-  font-size: 0.85rem;
-  color: #fef08a;
-  opacity: 0.9;
-}
 
 /* Progress Wrap */
 .progress-wrap {
