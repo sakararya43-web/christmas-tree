@@ -9,7 +9,8 @@
  * - Wide perspective ground grid (...., ::::, ----, ++++, ====)
  * - White pixelated snowfall physics & CRT bloom overlay
  * - Organic bottom-to-top assembly animation completed exactly at 15th second (15.0s build + celebration)
- * - Synchronized to Sia - Snowman with seamless audio handling
+ * - Immediate start on link click (unmuted if permitted, seamless muted start + instant gesture unmute)
+ * - Exact audio synchronization to Sia - Snowman
  */
 
 (function () {
@@ -21,7 +22,7 @@
   const NATIVE_H = 1180;
   const CX = NATIVE_W / 2;
 
-  // DOM Elements (Safely retrieved)
+  // DOM Elements
   const treeCanvas = document.getElementById('tree-canvas');
   const treeCtx = treeCanvas ? treeCanvas.getContext('2d') : null;
   const skyCanvas = document.getElementById('sky-canvas');
@@ -48,7 +49,7 @@
   const progressLabel = document.getElementById('progress-label');
   const audioPill = document.getElementById('audio-pill');
 
-  // Load Reference Image & Background Image with Robust Cache Handling
+  // Load Reference Image & Background with Cache-Safe Check
   let refLoaded = false;
   const refImg = new Image();
   refImg.onload = () => { refLoaded = true; };
@@ -178,7 +179,12 @@
     lastFrameTime = now;
 
     if (isPlaying) {
-      animTime += dt;
+      if (bgAudio && !bgAudio.paused && bgAudio.currentTime > 0) {
+        // Synchronize animation time directly to exact audio timestamp
+        animTime = bgAudio.currentTime;
+      } else {
+        animTime += dt;
+      }
       snowSystem.update(dt, animTime);
     }
 
@@ -276,11 +282,8 @@
         if (t >= 3.5) {
           treeCtx.save();
           treeCtx.beginPath();
-          // Red gift box left
           treeCtx.rect(170, 950, 230, 200);
-          // Blue gift box right
           treeCtx.rect(680, 950, 240, 200);
-          // Center snow mound
           treeCtx.rect(390, 1010, 300, 140);
           treeCtx.clip();
           treeCtx.drawImage(refImg, 0, 0, NATIVE_W, NATIVE_H);
@@ -320,9 +323,7 @@
           const starProg = Math.min(1.0, (t - 13.5) / 1.5);
           treeCtx.save();
           treeCtx.beginPath();
-          // Star body
           treeCtx.rect(CX - 85, 115, 170, 90);
-          // Radiant celestial beams shooting outward
           if (starProg > 0.3) {
             const bProg = (starProg - 0.3) / 0.7;
             const beamTop = Math.round(200 - bProg * 180);
@@ -366,7 +367,7 @@
       treeCtx.restore();
     }
 
-    // 5. White Pixelated Snowfall (Always active and falling!)
+    // 5. White Pixelated Snowfall
     treeCtx.shadowColor = '#ffffff';
     treeCtx.shadowBlur = 4;
     snowSystem.flakes.forEach(f => {
@@ -391,7 +392,7 @@
     treeCtx.shadowBlur = 0;
   }
 
-  // Interactive Click on Canvas
+  // Interactive Click on Canvas for Sparkles & Gesture Unmute
   if (treeCanvas) {
     treeCanvas.addEventListener('pointerdown', (e) => {
       const rect = treeCanvas.getBoundingClientRect();
@@ -401,10 +402,11 @@
       const clickX = (e.clientX - rect.left) * scaleX;
       const clickY = (e.clientY - rect.top) * scaleY;
       addSparkles(clickX, clickY);
+      unmuteAudio();
     });
   }
 
-  // Audio Control & Safe Autoplay Handling
+  // Audio Playback & Auto-Unmute Engine
   function safeSeekAudio(time) {
     if (!bgAudio) return;
     try {
@@ -426,36 +428,62 @@
     bgAudio.volume = parseFloat(volSlider ? volSlider.value : 0.8) || 0.8;
     safeSeekAudio(0.0);
 
+    // Attempt 1: Play unmuted immediately
+    bgAudio.muted = false;
     const playPromise = bgAudio.play();
+
     if (playPromise !== undefined) {
       playPromise.then(() => {
+        // Success! Browser allowed unmuted autoplay (e.g. MEI threshold passed or permitted)
         isMuted = false;
+        isPlaying = true;
         updateAudioUI();
         if (audioPill) audioPill.classList.add('hidden');
       }).catch(err => {
-        // Autoplay policy prevented unmuted autoplay
-        console.log('Autoplay deferred, waiting for first interaction:', err);
-        if (audioPill) audioPill.classList.remove('hidden');
-        updateAudioUI();
+        // Attempt 2: If browser blocks unmuted sound, immediately start playing muted
+        // This ensures the animation, music timeline, and visuals start immediately with ZERO delay!
+        console.log('Unmuted autoplay deferred by browser policy. Starting synchronized muted stream:', err);
+        bgAudio.muted = true;
+        bgAudio.play().then(() => {
+          isMuted = true;
+          isPlaying = true;
+          updateAudioUI();
+          if (audioPill) {
+            audioPill.classList.remove('hidden');
+            const pillText = audioPill.querySelector('.audio-pill-text');
+            if (pillText) pillText.textContent = 'Tap anywhere to unmute music (Sia - Snowman)';
+          }
+        }).catch(e2 => {
+          console.warn('Playback error:', e2);
+          updateAudioUI();
+        });
       });
     }
   }
 
-  // Seamless unlock on first click, tap, scroll, or keypress anywhere
-  function unlockAudio() {
+  // Instant Unmute on ANY user gesture (touch, click, scroll, keypress)
+  function unmuteAudio() {
     if (!bgAudio) return;
-    if (bgAudio.paused) {
+
+    if (bgAudio.muted) {
+      bgAudio.muted = false;
+      bgAudio.volume = parseFloat(volSlider ? volSlider.value : 0.8) || 0.8;
+      isMuted = false;
+      if (audioPill) audioPill.classList.add('hidden');
+      updateAudioUI();
+    } else if (bgAudio.paused) {
       bgAudio.volume = parseFloat(volSlider ? volSlider.value : 0.8) || 0.8;
       bgAudio.play().then(() => {
         isMuted = false;
-        updateAudioUI();
+        isPlaying = true;
         if (audioPill) audioPill.classList.add('hidden');
+        updateAudioUI();
       }).catch(() => {});
     }
   }
 
   ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(ev => {
-    window.addEventListener(ev, unlockAudio, { passive: true });
+    window.addEventListener(ev, unmuteAudio, { passive: true });
   });
 
   // Ensure loop restarts cleanly from 0:00
@@ -482,23 +510,26 @@
     if (muteIcon) {
       if (bgAudio.muted || bgAudio.volume === 0) {
         muteIcon.textContent = '🔇';
-      } else if (bgAudio.volume < 0.5) {
-        muteIcon.textContent = '🔉';
+        if (btnMute) btnMute.classList.add('muted-prompt');
       } else {
         muteIcon.textContent = '🔊';
+        if (btnMute) btnMute.classList.remove('muted-prompt');
       }
     }
   }
 
-  // Start playback attempt on load
+  // Start playback immediately upon script execution, DOM ready, and window load
   startPlayback();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startPlayback);
+  }
   window.addEventListener('load', startPlayback);
 
-  // Pill click starts audio immediately
+  // Pill click unmutes music immediately
   if (audioPill) {
     audioPill.addEventListener('click', (e) => {
       e.stopPropagation();
-      unlockAudio();
+      unmuteAudio();
     });
   }
 
@@ -513,9 +544,16 @@
       } else {
         isPlaying = true;
         lastFrameTime = performance.now();
-        if (bgAudio) bgAudio.play().catch(() => {});
+        if (bgAudio) {
+          bgAudio.muted = false;
+          bgAudio.volume = parseFloat(volSlider ? volSlider.value : 0.8) || 0.8;
+          bgAudio.play().then(() => {
+            isMuted = false;
+            if (audioPill) audioPill.classList.add('hidden');
+            updateAudioUI();
+          }).catch(() => {});
+        }
         if (viewMode === 'video' && hdVideo) hdVideo.play().catch(() => {});
-        if (audioPill) audioPill.classList.add('hidden');
       }
       updateAudioUI();
     });
@@ -530,9 +568,16 @@
       if (viewMode === 'video' && hdVideo) hdVideo.currentTime = 0;
       isPlaying = true;
       lastFrameTime = performance.now();
-      if (bgAudio) bgAudio.play().catch(() => {});
+      if (bgAudio) {
+        bgAudio.muted = false;
+        bgAudio.volume = parseFloat(volSlider ? volSlider.value : 0.8) || 0.8;
+        bgAudio.play().then(() => {
+          isMuted = false;
+          if (audioPill) audioPill.classList.add('hidden');
+          updateAudioUI();
+        }).catch(() => {});
+      }
       if (viewMode === 'video' && hdVideo) hdVideo.play().catch(() => {});
-      if (audioPill) audioPill.classList.add('hidden');
       if (progressBarWrap) progressBarWrap.classList.remove('done');
       updateAudioUI();
     });
@@ -543,9 +588,12 @@
     btnMute.addEventListener('click', (e) => {
       e.stopPropagation();
       if (!bgAudio) return;
-      bgAudio.muted = !bgAudio.muted;
-      if (viewMode === 'video' && hdVideo) hdVideo.muted = bgAudio.muted;
-      updateAudioUI();
+      if (bgAudio.muted) {
+        unmuteAudio();
+      } else {
+        bgAudio.muted = true;
+        updateAudioUI();
+      }
     });
   }
 
@@ -554,7 +602,10 @@
     volSlider.addEventListener('input', (e) => {
       if (!bgAudio) return;
       bgAudio.volume = parseFloat(e.target.value);
-      if (bgAudio.volume > 0) bgAudio.muted = false;
+      if (bgAudio.volume > 0) {
+        bgAudio.muted = false;
+        if (audioPill) audioPill.classList.add('hidden');
+      }
       if (viewMode === 'video' && hdVideo) hdVideo.volume = bgAudio.volume;
       updateAudioUI();
     });

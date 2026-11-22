@@ -360,6 +360,12 @@ html, body {
   box-shadow: 0 0 18px rgba(34, 197, 94, 0.55);
 }
 
+.control-btn.muted-prompt {
+  border-color: var(--gold-accent);
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.6);
+  animation: pulse-glow 1.6s infinite ease-in-out;
+}
+
 .vol-slider {
   width: 90px;
   accent-color: var(--gold-accent);
