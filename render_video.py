@@ -114,13 +114,13 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
         s: ImageFont.truetype(font_path, s) for s in [10, 14, 18, 22]
     }
 
-    # Organic reveal animation milestones (total build duration = 16.0s)
-    # 0.0s - 2.0s: Starry sky with snowfall (Sia: "Don't cry snowman...")
-    # 2.0s - 4.5s: Ground perspective lines reveal from horizon outward
-    # 4.5s - 6.5s: Wrapped gift boxes assemble at base with ribbon sparkles
-    # 6.5s - 13.8s: Tree ascends organically from bottom to top (7.3s ascent)
-    # 13.8s - 15.5s: Crown star ignites at apex, radiating celestial beams
-    # 15.5s - 18.0s: Full celebration with pulsing star, twinkling garlands, continuous snowfall
+    # Organic reveal animation milestones (Completed exactly at 15.0s):
+    # 0.0s - 1.5s: Starry sky with snowfall (Sia: "Don't cry snowman...")
+    # 1.5s - 3.5s: Ground perspective lines reveal from horizon outward
+    # 3.5s - 5.5s: Wrapped gift boxes assemble at base with ribbon sparkles
+    # 5.5s - 13.5s: Tree ascends organically from bottom to top (8.0s organic climb)
+    # 13.5s - 15.0s: Crown star ignites at apex, radiating celestial beams
+    # 15.0s - 18.0s: Completed tree celebration with pulsing star, twinkling garlands, snowfall
 
     for frame_idx in range(total_frames):
         t_sec = frame_idx * dt
@@ -128,15 +128,15 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
         # Organic reveal mask (0.0 = sky, 1.0 = reference artwork)
         mask = np.zeros((h, w), dtype=np.float32)
 
-        # 1. Ground: 2.0s to 4.5s (y from 810 to h)
-        if t_sec >= 2.0:
-            g_prog = min(1.0, (t_sec - 2.0) / 2.5)
+        # 1. Ground: 1.5s to 3.5s (y from 810 to h)
+        if t_sec >= 1.5:
+            g_prog = min(1.0, (t_sec - 1.5) / 2.0)
             curr_g_y = int(810 + g_prog * (h - 810))
             mask[810:curr_g_y, :] = 1.0
 
-        # 2. Gifts & Snow Mound: 4.5s to 6.5s
-        if t_sec >= 4.5:
-            gift_prog = min(1.0, (t_sec - 4.5) / 2.0)
+        # 2. Gifts & Snow Mound: 3.5s to 5.5s
+        if t_sec >= 3.5:
+            gift_prog = min(1.0, (t_sec - 3.5) / 2.0)
             gift_area = (y_coords >= 960) & (y_coords <= 1130) & (
                 ((x_coords >= 190) & (x_coords <= 400)) |  # Red gift box left
                 ((x_coords >= 690) & (x_coords <= 910)) |  # Blue gift box right
@@ -144,11 +144,11 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
             )
             mask[gift_area] = np.maximum(mask[gift_area], gift_prog)
 
-        # 3. Tree Foliage & Garlands: 6.5s to 13.8s (Ascends from y=1040 to y=200)
+        # 3. Tree Foliage & Garlands: 5.5s to 13.5s (Ascends from y=1040 to y=200)
         curr_tree_y = 1040.0
         tree_prog = 0.0
-        if t_sec >= 6.5:
-            tree_prog = min(1.0, (t_sec - 6.5) / 7.3)
+        if t_sec >= 5.5:
+            tree_prog = min(1.0, (t_sec - 5.5) / 8.0)
             curr_tree_y = 1040.0 - tree_prog * (1040.0 - 200.0)
 
             # Conical pine silhouette
@@ -160,9 +160,9 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
             revealed_tree = in_cone & (y_coords >= (curr_tree_y + branch_wobble))
             mask[revealed_tree] = 1.0
 
-        # 4. Apex Crown Star & Radiant Beams: 13.8s to 15.5s
-        if t_sec >= 13.8:
-            star_prog = min(1.0, (t_sec - 13.8) / 1.7)
+        # 4. Apex Crown Star & Radiant Beams: 13.5s to 15.0s (Completed exactly at 15.0s)
+        if t_sec >= 13.5:
+            star_prog = min(1.0, (t_sec - 13.5) / 1.5)
             # Crown star body (y: 120 to 200, x: cx +- 80)
             crown_area = (y_coords >= 120) & (y_coords <= 200) & (np.abs(x_coords - cx) <= 85)
             mask[crown_area] = np.maximum(mask[crown_area], star_prog)
@@ -173,8 +173,8 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
                 beam_area = (y_coords >= int(200 - beam_prog * 170)) & (y_coords <= 130) & (np.abs(x_coords - cx) <= int(beam_prog * 130))
                 mask[beam_area] = np.maximum(mask[beam_area], beam_prog)
 
-        if t_sec >= 15.5:
-            # Full 100% faithful reference artwork active
+        if t_sec >= 15.0:
+            # Full 100% faithful reference artwork active - Tree completed exactly at 15.0s
             mask[:] = 1.0
 
         # Composite reference artwork over starry sky plate
@@ -240,7 +240,7 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
     pipe.stdin.close()
     pipe.wait()
 
-    # Multiplex audio: Sia - Snowman starting from timestamp 0:06
+    # Multiplex audio: Sia - Snowman starting immediately from timestamp 0:06
     if os.path.exists(audio_file):
         print("Multiplexing soundtrack: Sia - Snowman (starting from timestamp 0:06)...")
         mux_cmd = [
@@ -249,7 +249,7 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
             "-i",
             temp_video,
             "-ss",
-            "6.0",
+            "0",
             "-t",
             str(duration),
             "-i",

@@ -1,6 +1,6 @@
 # 🎄 Festive Christmas Tree ASCII Animation
 
-> An authentic, glowing ASCII art Christmas tree animation with 100% visual fidelity to the reference artwork, organic bottom-to-top assembly running for **at least 15 seconds** (16.0s build + celebration), white pixelated snowfall, bells, wrapped gifts, and synchronized to **"Snowman" by Sia** (starting from timestamp **0:06**).
+> An authentic, glowing ASCII art Christmas tree animation with 100% visual fidelity to the reference artwork, organic bottom-to-top assembly completed **exactly at the 15th second** (15.0s build + celebration), white pixelated snowfall, bells, wrapped gifts, and synchronized to **"Snowman" by Sia** (starting directly from timestamp **0:06**).
 
 [![Deploy to GitHub Pages](https://github.com/sakararya43-web/christmas-tree/actions/workflows/deploy.yml/badge.svg)](https://github.com/sakararya43-web/christmas-tree/actions/workflows/deploy.yml)
 **Live Demo on GitHub Pages**: [https://sakararya43-web.github.io/christmas-tree/](https://sakararya43-web.github.io/christmas-tree/)
@@ -16,13 +16,14 @@
   - Wrapped gift boxes with ribbons & bows at the base (Crimson Red box on left, Royal Blue box on right) and snow mound.
   - Conical pine foliage, golden spiraling garland paths (`#ee*0`, `*ee#%*`), ruby red baubles (`@`, `%`), and golden bells.
   - Golden crown star with radiating celestial light beams (`\`, `|`, `/`, `-`).
-- **Organic Bottom-to-Top Assembly Animation (>15 Seconds)**:
-  - **0.0s – 2.0s**: Quiet cosmic night with drifting snowfall; Sia opens with *"Don't cry, snowman, not in front of me..."*.
-  - **2.0s – 4.5s**: Wide perspective ground plane lines reveal smoothly from the horizon down to the foreground.
-  - **4.5s – 6.5s**: Wrapped gift boxes assemble and tie their bows with shimmering sparkles at the base.
-  - **6.5s – 13.8s**: The Christmas tree ascends smoothly from bottom to top; foliage, garland spirals, and ornaments illuminate as a dynamic sparkle crest rides the leading edge.
-  - **13.8s – 15.5s**: Crown star takes shape and ignites at the apex with radiant celestial light beams flaring into space!
-  - **15.5s – 18.0s+**: Full festive celebration with breathing golden star halo, rippling garland lights, shimmering baubles, and continuous white pixel snowfall.
+- **Organic Bottom-to-Top Assembly (Completed Exactly at 15th Second)**:
+  - **0.0s – 1.5s**: Quiet cosmic night with drifting snowfall; Sia opens with *"Don't cry, snowman, not in front of me..."*.
+  - **1.5s – 3.5s**: Wide perspective ground plane lines reveal smoothly from the horizon down to the foreground.
+  - **3.5s – 5.5s**: Wrapped gift boxes assemble and tie their bows with shimmering sparkles at the base.
+  - **5.5s – 13.5s**: The Christmas tree ascends smoothly from bottom to top; foliage, garland spirals, and ornaments illuminate as a dynamic sparkle crest rides the leading edge.
+  - **13.5s – 15.0s**: Crown star takes shape and ignites at the apex with radiant celestial light beams flaring into space!
+  - **15.0s**: **Tree is 100% completed!** Progress bar reaches 100%.
+  - **15.0s – 18.0s+**: Full festive celebration with breathing golden star halo, rippling garland lights, shimmering baubles, and continuous white pixel snowfall.
 - **Pixelated Snowfall Physics**:
   - Swaying ASCII snowflakes (`*`, `·`, `.`, `+`, `o`, `❄`) drifting down across the canvas with realistic physics.
 - **Synchronized Soundtrack**:

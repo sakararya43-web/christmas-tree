@@ -227,15 +227,15 @@ class SnowfallSystem:
                 flake["x"] -= self.width
 
 
-def get_animated_frame(static_scene, t_sec, total_build_duration=16.0, snow_system=None):
+def get_animated_frame(static_scene, t_sec, total_build_duration=15.0, snow_system=None):
     """
-    Organic bottom-to-top assembly timeline (>15 seconds):
-    - 0.0s - 2.0s: Starry cosmos and gentle snowfall; Sia begins "Don't cry snowman...".
-    - 2.0s - 4.5s: Ground perspective lines illuminate from horizon outward.
-    - 4.5s - 6.5s: Wrapped gift boxes assemble at the base with ribbon sparkles.
-    - 6.5s - 13.8s: Tree ascends smoothly from bottom to top with dynamic sparkling crest!
-    - 13.8s - 15.5s: Crown star ignites at the apex and radiant beams shoot into space!
-    - 15.5s+: Full celebration with glowing garland pulses, star breathing, and snow.
+    Organic bottom-to-top assembly timeline (Completed exactly at 15.0s):
+    - 0.0s - 1.5s: Starry cosmos and gentle snowfall; Sia begins "Don't cry snowman...".
+    - 1.5s - 3.5s: Ground perspective lines illuminate from horizon outward.
+    - 3.5s - 5.5s: Wrapped gift boxes assemble at the base with ribbon sparkles.
+    - 5.5s - 13.5s: Tree ascends smoothly from bottom to top with dynamic sparkling crest!
+    - 13.5s - 15.0s: Crown star ignites at the apex and radiant beams shoot into space!
+    - 15.0s+: Tree fully completed! Ongoing celebration with glowing garlands, breathing star, and snowfall.
     """
     width = len(static_scene[0])
     height = len(static_scene)
@@ -249,9 +249,9 @@ def get_animated_frame(static_scene, t_sec, total_build_duration=16.0, snow_syst
                 twinkle = 0.5 + 0.5 * math.sin(t_sec * 2.2 + x * 0.7 + y * 1.1)
                 frame[y][x] = Cell(cell.char, cell.color, cell.glow * twinkle, "sky", y)
 
-    # Phase 1: Ground perspective grid (2.0s to 4.5s)
-    if t_sec >= 2.0:
-        g_prog = min(1.0, (t_sec - 2.0) / 2.5)
+    # Phase 1: Ground perspective grid (1.5s to 3.5s)
+    if t_sec >= 1.5:
+        g_prog = min(1.0, (t_sec - 1.5) / 2.0)
         # Horizon at gy = 41 down to gy = 57
         cutoff_gy = int(41 + g_prog * (height - 41))
         for y in range(41, min(height, cutoff_gy + 1)):
@@ -262,9 +262,9 @@ def get_animated_frame(static_scene, t_sec, total_build_duration=16.0, snow_syst
                     flash = 1.4 if is_edge and g_prog < 1.0 else 1.0
                     frame[y][x] = Cell(orig.char, orig.color, orig.glow * flash, "ground", y)
 
-    # Phase 2: Gifts & Snow Mound at Base (4.5s to 6.5s)
-    if t_sec >= 4.5:
-        gift_prog = min(1.0, (t_sec - 4.5) / 2.0)
+    # Phase 2: Gifts & Snow Mound at Base (3.5s to 5.5s)
+    if t_sec >= 3.5:
+        gift_prog = min(1.0, (t_sec - 3.5) / 2.0)
         gift_cutoff_y = int((height - 2) - gift_prog * 12)
         for y in range(45, height):
             for x in range(width):
@@ -272,11 +272,11 @@ def get_animated_frame(static_scene, t_sec, total_build_duration=16.0, snow_syst
                 if orig.layer == "gift" and y >= gift_cutoff_y:
                     frame[y][x] = Cell(orig.char, orig.color, orig.glow, "gift", y)
 
-    # Phase 3: Organic Pine Tree Growth (6.5s to 13.8s)
-    if t_sec >= 6.5:
+    # Phase 3: Organic Pine Tree Growth (5.5s to 13.5s)
+    if t_sec >= 5.5:
         tree_bottom_gy = 51
         tree_top_gy = 9
-        tree_prog = min(1.0, (t_sec - 6.5) / 7.3)
+        tree_prog = min(1.0, (t_sec - 5.5) / 8.0)
         curr_tree_growth_y = tree_bottom_gy - tree_prog * (tree_bottom_gy - tree_top_gy)
 
         cx = width // 2
@@ -300,7 +300,7 @@ def get_animated_frame(static_scene, t_sec, total_build_duration=16.0, snow_syst
                                 color = random.choice(["#fef08a", "#ffffff", "#86efac", "#facc15"])
 
                         # Post-reveal celebration effects
-                        if t_sec >= 14.0:
+                        if t_sec >= 13.5:
                             if orig.layer == "garland":
                                 wave_g = math.sin(t_sec * 3.8 - y * 0.4 + x * 0.15)
                                 glow = 0.75 + 0.25 * wave_g
@@ -310,9 +310,9 @@ def get_animated_frame(static_scene, t_sec, total_build_duration=16.0, snow_syst
 
                         frame[y][x] = Cell(char, color, glow, orig.layer, y)
 
-    # Phase 4: Crown Star & Radiant Beams (13.8s to 15.5s)
-    if t_sec >= 13.8:
-        star_prog = min(1.0, (t_sec - 13.8) / 1.7)
+    # Phase 4: Crown Star & Radiant Beams (13.5s to 15.0s - Tree completed exactly at 15.0s)
+    if t_sec >= 13.5:
+        star_prog = min(1.0, (t_sec - 13.5) / 1.5)
         star_pulse = 1.0 + 0.2 * math.sin(t_sec * 4.5)
         for y in range(height):
             for x in range(width):
@@ -344,7 +344,7 @@ def export_scene_data(json_path="tree_data.json"):
     data = {
         "width": WIDTH,
         "height": HEIGHT,
-        "build_duration": 16.0,
+        "build_duration": 15.0,
         "cells": [[scene[y][x].to_dict() for x in range(WIDTH)] for y in range(HEIGHT)],
     }
     with open(json_path, "w", encoding="utf-8") as f:

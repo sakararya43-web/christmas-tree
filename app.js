@@ -16,7 +16,7 @@
   'use strict';
 
   // Constants
-  const TOTAL_BUILD_DURATION = 16.0; // Seconds for bottom-to-top assembly (>15 seconds)
+  const TOTAL_BUILD_DURATION = 15.0; // Tree is completed exactly at 15.0s
 
   // DOM Elements
   const treeCanvas = document.getElementById('tree-canvas');
@@ -175,15 +175,15 @@
     progressBar.style.setProperty('--progress', `${progress * 100}%`);
     if (progress < 1.0) {
       progressBarWrap.classList.remove('done');
-      if (animTime < 2.0) progressLabel.textContent = "Don't cry, snowman...";
-      else if (animTime < 4.5) progressLabel.textContent = "Not in front of me...";
-      else if (animTime < 6.5) progressLabel.textContent = "Gifts & Ground Assembling... 🎁";
-      else if (animTime < 10.0) progressLabel.textContent = "Tree Ascending... 🌲";
-      else if (animTime < 13.8) progressLabel.textContent = "Garlands Blooming... ✨";
+      if (animTime < 1.5) progressLabel.textContent = "Don't cry, snowman...";
+      else if (animTime < 3.5) progressLabel.textContent = "Not in front of me...";
+      else if (animTime < 5.5) progressLabel.textContent = "Gifts & Ground Assembling... 🎁";
+      else if (animTime < 9.5) progressLabel.textContent = "Tree Ascending... 🌲";
+      else if (animTime < 13.5) progressLabel.textContent = "Garlands Blooming... ✨";
       else progressLabel.textContent = "⭐ Pinnacle Crown Star Igniting! ⭐";
     } else {
       progressLabel.textContent = 'Merry Christmas & Happy Holidays! 🎄';
-      if (animTime > 18.0) progressBarWrap.classList.add('done');
+      if (animTime > 17.0) progressBarWrap.classList.add('done');
     }
 
     // Draw Sky Background
@@ -234,19 +234,19 @@
     let treeProg = 0.0;
     let currTreeY = 1040;
 
-    if (t < 15.5) {
+    if (t < 15.0) {
       treeCtx.save();
       treeCtx.beginPath();
 
-      // A. Ground Perspective Grid (2.0s to 4.5s)
-      if (t >= 2.0) {
-        const gProg = Math.min(1.0, (t - 2.0) / 2.5);
+      // A. Ground Perspective Grid (1.5s to 3.5s)
+      if (t >= 1.5) {
+        const gProg = Math.min(1.0, (t - 1.5) / 2.0);
         const currGY = 810 + gProg * (NATIVE_H - 810);
         treeCtx.rect(0, 810, NATIVE_W, currGY - 810);
       }
 
-      // B. Wrapped Gifts & Snow Bank (4.5s to 6.5s)
-      if (t >= 4.5) {
+      // B. Wrapped Gifts & Snow Bank (3.5s to 5.5s)
+      if (t >= 3.5) {
         // Red gift box (left)
         treeCtx.rect(190, 960, 210, 180);
         // Blue gift box (right)
@@ -255,9 +255,9 @@
         treeCtx.rect(400, 1020, 290, 120);
       }
 
-      // C. Tree Foliage & Garlands (6.5s to 13.8s)
-      if (t >= 6.5) {
-        treeProg = Math.min(1.0, (t - 6.5) / 7.3);
+      // C. Tree Foliage & Garlands (5.5s to 13.5s)
+      if (t >= 5.5) {
+        treeProg = Math.min(1.0, (t - 5.5) / 8.0);
         currTreeY = 1040 - treeProg * (1040 - 200);
 
         const halfWAtBase = 385;
@@ -280,9 +280,9 @@
         treeCtx.closePath();
       }
 
-      // D. Apex Crown Star & Radiant Beams (13.8s to 15.5s)
-      if (t >= 13.8) {
-        const starProg = Math.min(1.0, (t - 13.8) / 1.7);
+      // D. Apex Crown Star & Radiant Beams (13.5s to 15.0s - Completed exactly at 15.0s)
+      if (t >= 13.5) {
+        const starProg = Math.min(1.0, (t - 13.5) / 1.5);
         // Crown star body
         treeCtx.rect(CX - 85, 120, 170, 85);
         // Radiating celestial beams
@@ -367,8 +367,8 @@
     addSparkles(clickX, clickY);
   });
 
-  // Audio Handlers (Starts from timestamp 0:06)
-  const AUDIO_START_TIME = 6.0;
+  // Audio Handlers (Starts immediately from 0:06 of Sia - Snowman)
+  const AUDIO_START_TIME = 0.0;
 
   function startPlayback() {
     audioPrompt.classList.add('hidden');

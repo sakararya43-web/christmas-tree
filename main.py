@@ -33,7 +33,7 @@ def hex_to_rgb(hex_str):
     return tuple(int(hex_str[i : i + 2], 16) for i in (0, 2, 4))
 
 
-def play_audio(audio_path, start_time=6.0):
+def play_audio(audio_path, start_time=0.0):
     try:
         import pygame
 
@@ -41,7 +41,10 @@ def play_audio(audio_path, start_time=6.0):
         if os.path.exists(audio_path):
             pygame.mixer.music.load(audio_path)
             try:
-                pygame.mixer.music.play(-1, start=start_time)
+                if start_time > 0.0:
+                    pygame.mixer.music.play(-1, start=start_time)
+                else:
+                    pygame.mixer.music.play(-1)
             except Exception:
                 pygame.mixer.music.play(-1)
             return True
@@ -58,17 +61,17 @@ def render_to_terminal(frame, terminal_width, terminal_height, elapsed):
     output_lines.append("\033[?25l\033[H")
 
     # Header banner with synchronized lyrics
-    if elapsed < 2.0:
+    if elapsed < 1.5:
         lyric = "🎶 'Don't cry, snowman, not in front of me...'"
-    elif elapsed < 4.5:
+    elif elapsed < 3.5:
         lyric = "🎶 'Who'll catch your tears if you can't catch me, darling...'"
-    elif elapsed < 6.5:
+    elif elapsed < 5.5:
         lyric = "🎁 'If you can't catch me, darling...' [Gifts & Snow Assembling]"
-    elif elapsed < 10.0:
+    elif elapsed < 9.5:
         lyric = "🌲 'Don't cry, snowman, don't leave me this way...' [Tree Ascending]"
-    elif elapsed < 13.8:
+    elif elapsed < 13.5:
         lyric = "✨ 'A puddle of water can't hold me close, baby!' [Garlands Blooming]"
-    elif elapsed < 15.5:
+    elif elapsed < 15.0:
         lyric = "⭐ 'Can't hold me close, baby...' [Apex Crown Star Igniting!]"
     else:
         lyric = "❄  MERRY CHRISTMAS & HAPPY HOLIDAYS!  ❄  [ Sia - Snowman ]"
@@ -97,12 +100,12 @@ def render_to_terminal(frame, terminal_width, terminal_height, elapsed):
         line_parts.append("\033[0m")
         output_lines.append("".join(line_parts))
 
-    progress = min(100.0, (elapsed / 16.0) * 100.0)
+    progress = min(100.0, (elapsed / 15.0) * 100.0)
     bar_width = 30
     filled = int((progress / 100.0) * bar_width)
     bar_str = "[" + "=" * filled + ("-" if filled < bar_width else "") + " " * (bar_width - filled - 1) + "]" if filled < bar_width else "[" + "=" * bar_width + "]"
     
-    footer = f"{bar_str} {progress:.0f}% | Bottom-to-Top Reveal (>15s) | Sia - Snowman | Ctrl+C to exit"
+    footer = f"{bar_str} {progress:.0f}% | Completed at 15.0s | Sia - Snowman | Ctrl+C to exit"
     footer_pad = max(0, (terminal_width - len(footer)) // 2)
     output_lines.append("\n" + " " * footer_pad + "\033[38;2;148;163;184m" + footer + "\033[0m")
 
@@ -123,7 +126,7 @@ def main():
 
     target_fps = 24
     frame_duration = 1.0 / target_fps
-    build_duration = 16.0
+    build_duration = 15.0
 
     start_time = time.time()
     last_time = start_time
