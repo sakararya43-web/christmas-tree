@@ -240,16 +240,16 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
     pipe.stdin.close()
     pipe.wait()
 
-    # Multiplex audio: Sia - Snowman
+    # Multiplex audio: Sia - Snowman starting from timestamp 0:06
     if os.path.exists(audio_file):
-        print("Multiplexing soundtrack: Sia - Snowman (starting from 'Don't cry snowman')...")
+        print("Multiplexing soundtrack: Sia - Snowman (starting from timestamp 0:06)...")
         mux_cmd = [
             "ffmpeg",
             "-y",
             "-i",
             temp_video,
             "-ss",
-            "0",
+            "6.0",
             "-t",
             str(duration),
             "-i",

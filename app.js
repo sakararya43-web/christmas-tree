@@ -367,11 +367,13 @@
     addSparkles(clickX, clickY);
   });
 
-  // Audio Handlers
+  // Audio Handlers (Starts from timestamp 0:06)
+  const AUDIO_START_TIME = 6.0;
+
   function startPlayback() {
     audioPrompt.classList.add('hidden');
     bgAudio.volume = parseFloat(volSlider.value);
-    bgAudio.currentTime = 0;
+    bgAudio.currentTime = AUDIO_START_TIME;
     bgAudio.play().then(() => {
       isMuted = false;
       updateAudioUI();
@@ -380,6 +382,12 @@
       unmuteToast.classList.remove('hidden');
     });
   }
+
+  // Ensure loop restarts from 0:06
+  bgAudio.addEventListener('ended', () => {
+    bgAudio.currentTime = AUDIO_START_TIME;
+    bgAudio.play().catch(() => {});
+  });
 
   function updateAudioUI() {
     if (bgAudio.paused) {
@@ -403,6 +411,7 @@
 
   toastUnmuteBtn.addEventListener('click', () => {
     bgAudio.muted = false;
+    bgAudio.currentTime = AUDIO_START_TIME;
     bgAudio.play();
     unmuteToast.classList.add('hidden');
     updateAudioUI();
@@ -424,7 +433,7 @@
 
   btnRestart.addEventListener('click', () => {
     animTime = 0.0;
-    bgAudio.currentTime = 0;
+    bgAudio.currentTime = AUDIO_START_TIME;
     if (viewMode === 'video') hdVideo.currentTime = 0;
     if (!isPlaying) {
       isPlaying = true;

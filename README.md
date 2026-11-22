@@ -1,6 +1,6 @@
 # 🎄 Festive Christmas Tree ASCII Animation
 
-> An authentic, glowing ASCII art Christmas tree animation with 100% visual fidelity to the reference artwork, organic bottom-to-top assembly running for **at least 15 seconds** (16.0s build + celebration), white pixelated snowfall, bells, wrapped gifts, and synchronized to **"Snowman" by Sia** (starting from *"Don't cry snowman"*).
+> An authentic, glowing ASCII art Christmas tree animation with 100% visual fidelity to the reference artwork, organic bottom-to-top assembly running for **at least 15 seconds** (16.0s build + celebration), white pixelated snowfall, bells, wrapped gifts, and synchronized to **"Snowman" by Sia** (starting from timestamp **0:06**).
 
 [![Deploy to GitHub Pages](https://github.com/sakararya43-web/christmas-tree/actions/workflows/deploy.yml/badge.svg)](https://github.com/sakararya43-web/christmas-tree/actions/workflows/deploy.yml)
 **Live Demo on GitHub Pages**: [https://sakararya43-web.github.io/christmas-tree/](https://sakararya43-web.github.io/christmas-tree/)

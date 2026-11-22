@@ -33,14 +33,17 @@ def hex_to_rgb(hex_str):
     return tuple(int(hex_str[i : i + 2], 16) for i in (0, 2, 4))
 
 
-def play_audio(audio_path):
+def play_audio(audio_path, start_time=6.0):
     try:
         import pygame
 
         pygame.mixer.init()
         if os.path.exists(audio_path):
             pygame.mixer.music.load(audio_path)
-            pygame.mixer.music.play(-1)
+            try:
+                pygame.mixer.music.play(-1, start=start_time)
+            except Exception:
+                pygame.mixer.music.play(-1)
             return True
     except Exception:
         return False
