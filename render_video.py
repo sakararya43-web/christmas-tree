@@ -1,12 +1,11 @@
 """
 High-Resolution Video Renderer for Christmas Tree ASCII Animation
-Renders the animation using PIL + FFmpeg with:
-- Monospace font Consolas
-- True phosphor bloom and character glow
-- White pixelated snowfall
-- Bottom-to-top progressive growth (18 seconds)
-- Synchronized Sia - Snowman audio track
-- Outputs christmas_tree.mp4
+Synchronized with Sia - Snowman (Main Part / Chorus):
+- Starts at: "I want you to know that I'm never leaving..."
+- Progressive bottom-to-top reveal (Ground -> Gifts -> Tree Foliage -> Star Beams)
+- Culminates at vocal drop: "Let's go below zero and hide from the sun!"
+- Continuous celebration with glowing garlands, baubles, and pixel snowfall
+- Outputs high-definition christmas_tree.mp4
 """
 
 import os
@@ -33,7 +32,6 @@ def hex_to_rgb(hex_str):
 def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
     print(f"Initializing video render: {duration}s @ {fps} fps ({int(duration * fps)} frames)...")
 
-    # Dimensions
     font_size = 18
     font_path = "C:/Windows/Fonts/consola.ttf"
     if not os.path.exists(font_path):
@@ -41,17 +39,15 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
 
     font = ImageFont.truetype(font_path, font_size)
 
-    # Character spacing
     char_w = 11
     char_h = 18
 
     margin_x = 25
     margin_y = 30
 
-    canvas_w = WIDTH * char_w + margin_x * 2  # 84 * 11 + 50 = 974
-    canvas_h = HEIGHT * char_h + margin_y * 2  # 62 * 18 + 60 = 1176
+    canvas_w = WIDTH * char_w + margin_x * 2
+    canvas_h = HEIGHT * char_h + margin_y * 2
 
-    # Ensure even dimensions for H.264
     if canvas_w % 2 != 0:
         canvas_w += 1
     if canvas_h % 2 != 0:
@@ -60,7 +56,7 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
     print(f"Canvas resolution: {canvas_w}x{canvas_h}")
 
     static_scene = build_static_scene(WIDTH, HEIGHT)
-    snow = SnowfallSystem(WIDTH, HEIGHT, count=90)
+    snow = SnowfallSystem(WIDTH, HEIGHT, count=95)
 
     audio_file = "snowman.mp3"
     temp_video = "temp_video.mp4"
@@ -70,7 +66,6 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
         except Exception:
             pass
 
-    # FFmpeg command: stderr=DEVNULL prevents pipe buffer deadlocks on Windows
     ffmpeg_cmd = [
         "ffmpeg",
         "-y",
@@ -101,14 +96,12 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
 
     total_frames = int(duration * fps)
     dt = 1.0 / fps
-
-    bg_color = (7, 11, 25)  # Dark navy #070b19
+    bg_color = (6, 9, 19)
 
     for frame_idx in range(total_frames):
         t_sec = frame_idx * dt
         snow.update(dt, t_sec)
 
-        # Build animated frame
         frame_grid = get_animated_frame(
             static_scene,
             t_sec=t_sec,
@@ -116,11 +109,9 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
             snow_system=snow,
         )
 
-        # Create image
         img = Image.new("RGB", (canvas_w, canvas_h), color=bg_color)
         draw = ImageDraw.Draw(img)
 
-        # Draw characters
         for row_idx, row in enumerate(frame_grid):
             py = margin_y + row_idx * char_h
             for col_idx, cell in enumerate(row):
@@ -135,21 +126,18 @@ def render_video(output_mp4="christmas_tree.mp4", duration=18.0, fps=24):
                     g = min(255, int(g * boost))
                     b = min(255, int(b * boost))
 
-                # Draw character
                 draw.text((px, py), cell.char, font=font, fill=(r, g, b))
 
-        # Push raw bytes to ffmpeg
         pipe.stdin.write(img.tobytes())
 
-        if (frame_idx + 1) % 50 == 0 or frame_idx == total_frames - 1:
+        if (frame_idx + 1) % 60 == 0 or frame_idx == total_frames - 1:
             print(f"Rendered {frame_idx + 1}/{total_frames} frames ({(frame_idx + 1) / total_frames * 100:.1f}%)")
 
     pipe.stdin.close()
     pipe.wait()
 
-    # Multiplex with audio if snowman.mp3 exists
     if os.path.exists(audio_file):
-        print("Multiplexing audio (Sia - Snowman)...")
+        print("Multiplexing audio (Sia - Snowman Main Chorus)...")
         mux_cmd = [
             "ffmpeg",
             "-y",

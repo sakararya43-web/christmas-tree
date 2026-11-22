@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
 Festive Christmas Tree Animation in Terminal
+Synchronized to Sia - Snowman (Chorus Main Part):
+"I want you to know that I'm never leaving..."
 Features:
-- Bottom-to-top progressive growth animation (16 seconds)
-- Authentic ASCII character rendering matching reference.jpeg
-- Bells, gifts with ribbons, and golden spiraling garlands
-- White pixelated snowfall with dynamic drifting physics
-- Plays "Snowman" by Sia via pygame.mixer
+- Bottom-to-top progressive growth animation matching reference photo
+- Ground perspective grid, snow bank, wrapped gifts, pine foliage, bells & ornaments
+- Golden crown star with radiant light beams igniting at the vocal drop
+- White pixelated snowfall with dynamic physics
+- Plays "Snowman" by Sia via pygame.mixer starting directly at the chorus
 - ANSI Truecolor terminal output for vibrant retro neon glow
 """
 
@@ -24,7 +26,6 @@ from tree_builder import (
     HEIGHT,
 )
 
-# Initialize colorama for Windows ANSI support
 colorama.init()
 
 
@@ -36,7 +37,6 @@ def hex_to_rgb(hex_str):
 
 
 def play_audio(audio_path):
-    """Attempts to play Sia - Snowman using pygame.mixer."""
     try:
         import pygame
 
@@ -45,26 +45,34 @@ def play_audio(audio_path):
             pygame.mixer.music.load(audio_path)
             pygame.mixer.music.play(-1)
             return True
-    except Exception as e:
+    except Exception:
         return False
     return False
 
 
-def render_to_terminal(frame, terminal_width, terminal_height):
-    """
-    Renders the frame to the terminal with ANSI truecolor and centering.
-    """
+def render_to_terminal(frame, terminal_width, terminal_height, elapsed):
     pad_left = max(0, (terminal_width - WIDTH) // 2)
     pad_str = " " * pad_left
 
     output_lines = []
-    # Hide cursor and move to home position
     output_lines.append("\033[?25l\033[H")
 
-    # Header banner
-    title = "❄  MERRY CHRISTMAS  ❄  [ Sia - Snowman ]"
-    title_pad = max(0, (terminal_width - len(title)) // 2)
-    output_lines.append(" " * title_pad + "\033[38;2;254;240;138;1m" + title + "\033[0m\n")
+    # Header banner with synced lyrics
+    if elapsed < 1.5:
+        lyric = "🎶 'I want you to know that I'm never leaving...'"
+    elif elapsed < 3.0:
+        lyric = "🎶 ''Cause I'm Mrs. Snow, 'til death we'll be freezing...'"
+    elif elapsed < 6.0:
+        lyric = "🎶 'Yeah, you are my home, my home for all seasons...'"
+    elif elapsed < 9.5:
+        lyric = "🎶 'So come on, let's go...'"
+    elif elapsed < 12.0:
+        lyric = "⭐ 'Let's go below zero and hide from the sun!' ⭐"
+    else:
+        lyric = "❄  MERRY CHRISTMAS  ❄  [ Sia - Snowman ]"
+
+    title_pad = max(0, (terminal_width - len(lyric)) // 2)
+    output_lines.append(" " * title_pad + "\033[38;2;254;240;138;1m" + lyric + "\033[0m\n")
 
     for row in frame:
         line_parts = [pad_str]
@@ -72,7 +80,6 @@ def render_to_terminal(frame, terminal_width, terminal_height):
         for cell in row:
             r, g, b = hex_to_rgb(cell.color)
             if cell.glow > 0.0:
-                # Boost brightness with glow
                 factor = 1.0 + cell.glow * 0.35
                 r = min(255, int(r * factor))
                 g = min(255, int(g * factor))
@@ -88,8 +95,7 @@ def render_to_terminal(frame, terminal_width, terminal_height):
         line_parts.append("\033[0m")
         output_lines.append("".join(line_parts))
 
-    # Controls footer
-    footer = "Press Ctrl+C to exit | Animation grows bottom-to-top | Snowman by Sia"
+    footer = "Press Ctrl+C to exit | Bottom-to-Top Growth Synced with Chorus"
     footer_pad = max(0, (terminal_width - len(footer)) // 2)
     output_lines.append("\n" + " " * footer_pad + "\033[38;2;148;163;184m" + footer + "\033[0m")
 
@@ -98,16 +104,15 @@ def render_to_terminal(frame, terminal_width, terminal_height):
 
 
 def main():
-    # Setup terminal screen
     os.system("cls" if os.name == "nt" else "clear")
 
-    print("\033[?25l")  # Hide cursor
-    print("Loading Christmas Tree ASCII Animation...")
+    print("\033[?25l")
+    print("Loading Christmas Tree Animation (Sia - Snowman Main Chorus)...")
     static_scene = build_static_scene(WIDTH, HEIGHT)
     snow = SnowfallSystem(WIDTH, HEIGHT, count=90)
 
     audio_file = os.path.join(os.path.dirname(__file__), "snowman.mp3")
-    music_playing = play_audio(audio_file)
+    play_audio(audio_file)
 
     target_fps = 24
     frame_duration = 1.0 / target_fps
@@ -123,10 +128,8 @@ def main():
             last_time = now
             elapsed = now - start_time
 
-            # Update snowfall physics
             snow.update(dt, elapsed)
 
-            # Get animated frame at current timestamp
             frame = get_animated_frame(
                 static_scene,
                 t_sec=elapsed,
@@ -134,11 +137,9 @@ def main():
                 snow_system=snow,
             )
 
-            # Get current terminal dimensions
             term_size = shutil.get_terminal_size((WIDTH + 4, HEIGHT + 4))
-            render_to_terminal(frame, term_size.columns, term_size.lines)
+            render_to_terminal(frame, term_size.columns, term_size.lines, elapsed)
 
-            # Cap frame rate
             compute_time = time.time() - now
             sleep_time = max(0.005, frame_duration - compute_time)
             time.sleep(sleep_time)
@@ -146,7 +147,6 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
-        # Restore cursor and terminal color
         print("\033[?25h\033[0m\n")
         try:
             import pygame
