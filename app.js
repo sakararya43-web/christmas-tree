@@ -498,7 +498,7 @@
     if (!bgAudio) return;
 
     if (playPauseIcon && playPauseText) {
-      if (bgAudio.paused) {
+      if (!isPlaying) {
         playPauseIcon.textContent = '▶';
         playPauseText.textContent = 'Play';
       } else {
@@ -508,7 +508,7 @@
     }
 
     if (muteIcon) {
-      if (bgAudio.muted || bgAudio.volume === 0) {
+      if (bgAudio.muted || bgAudio.volume === 0 || bgAudio.paused) {
         muteIcon.textContent = '🔇';
         if (btnMute) btnMute.classList.add('muted-prompt');
       } else {
